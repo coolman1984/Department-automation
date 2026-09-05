@@ -4,8 +4,8 @@
   "plan_version": "V1.0",
   "contract_version": "V1.0",
   "route": "available_claude",
-  "phase": "BUILD",
-  "status": "AWAITING_SWITCH",
+  "phase": "INTEGRATE",
+  "status": "IN_PROGRESS",
   "phase_attempt": 1,
   "workspace_path": "HR_Attendance_Control_V1",
   "source_revision": "foundation-local-v1",
@@ -13,9 +13,11 @@
     "Configured attendance ingestion and local history",
     "Added synthetic acceptance test and samples",
     "Recorded product decisions and future multi-file boundary",
-    "BLD-01: clarified import-rejection messages in USER_GUIDE.md; no engine, key, or PROJECT.json change"
+    "BLD-01: clarified import-rejection messages in USER_GUIDE.md; no engine, key, or PROJECT.json change",
+    "INT-01 decision recorded: separate files uploaded together",
+    "INT-01 sub-stage 1: documented source contracts for attendance, employee, roster, leave (project_memory/INT-01-SOURCE-CONTRACTS_AR.md); no engine or PROJECT.json change yet"
   ],
-  "current_task_id": "BLD-01",
+  "current_task_id": "INT-01",
   "next_task_id": "INT-01",
   "reported_model": "Claude Sonnet 5 (claude-sonnet-5), عبر أداة Claude Code",
   "reported_effort": "غير متحقق داخل أداة المستخدم",
@@ -46,6 +48,6 @@
     "measurement_source": "not collected in this foundation run"
   },
   "handoff_path": ".workflow/HANDOFF_AR.md",
-  "updated_at": "2026-09-05T00:30:00+00:00",
-  "completion_rule": "The foundation and the BLD-01 calibration task are complete. The product remains incomplete until the multi-file HR daily-delivery decision, Windows validation, integration, and independent review finish."
+  "updated_at": "2026-09-05T01:00:00+00:00",
+  "completion_rule": "The foundation and BLD-01 are complete. The daily-delivery shape decision is recorded. INT-01 source contracts are documented but the acceptance tests and engine implementation for multi-file HR ingestion are not started. The product remains incomplete until INT-01 finishes, Windows validation runs, and independent review completes."
 }
