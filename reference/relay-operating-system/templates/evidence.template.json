@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0",
+  "template_only": true,
+  "record_id": null,
+  "task_id": null,
+  "requirement_ids": [],
+  "source_revision": null,
+  "uncommitted_diff_hash": null,
+  "artifact_sha256": null,
+  "command": null,
+  "working_directory": null,
+  "tool_name": null,
+  "environment": null,
+  "started_at": null,
+  "finished_at": null,
+  "exit_code": null,
+  "result": "NOT_RUN",
+  "allowed_results": [
+    "PASS",
+    "FAIL",
+    "NOT_RUN",
+    "INCONCLUSIVE"
+  ],
+  "summary_ar": "لم يتم تنفيذ هذا الاختبار؛ هذا قالب فارغ.",
+  "log_path": null,
+  "expected_result_source": null,
+  "reviewer_identity": null,
+  "independent_check": false,
+  "note_ar": "ينشأ سجل مستقل لكل تحقق فعلي. قيم غير منفذ لا تُحوّل لنجاح تلقائيًا. ينقح السجل من الأسرار دون تغيير نتيجته."
+}

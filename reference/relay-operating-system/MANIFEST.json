@@ -1,0 +1,70 @@
+{
+  "GUIDE_AR.md": {
+    "bytes": 32903,
+    "sha256": "088c90974ce096015b15dfb4b1644de77c7ad283ae9211efb77700d86e559538"
+  },
+  "SOURCES_AR.md": {
+    "bytes": 7637,
+    "sha256": "37ba3d1c414c9a956daa6a6f917ed09a570234b40edbe0ce7a25e89266affa29"
+  },
+  "START_HERE_AR.md": {
+    "bytes": 4784,
+    "sha256": "9bd0b04255e5c8b86d65138414f83379e59f74359acbbc84ce8d688aada54a9e"
+  },
+  "VERIFICATION_AR.md": {
+    "bytes": 1268,
+    "sha256": "4ccb36582400750841c8b08646637aa836b680ae21c8f6288709941b007adb34"
+  },
+  "examples/HR_PLAN_AR.md": {
+    "bytes": 6500,
+    "sha256": "b4113e7ef2daacf0be0a642bc281ee0dfd1ce3ceb5e2f1e07b9ae05ec35c697b"
+  },
+  "examples/hr_acceptance_cases.json": {
+    "bytes": 6370,
+    "sha256": "8f1e452242ea212bae24591c5f3ca92b12409816f044b3579c31ec7581940ef1"
+  },
+  "prompts/01_FOUNDATION_AR.md": {
+    "bytes": 3901,
+    "sha256": "9e43fe9dc7785a7df38447e1fbb3c5b63699125c9f61ee86244b948ee2a0dfee"
+  },
+  "prompts/02_BUILD_AR.md": {
+    "bytes": 2743,
+    "sha256": "744e345a733df2c02da4cc63d25302575dfc56d25736c2ec2e05f61e2fd96cb4"
+  },
+  "prompts/03_INTEGRATE_AR.md": {
+    "bytes": 2868,
+    "sha256": "f0485aa59899c57978ab246b9518d90c4ef9094f5944c7247ce2c23571ec63ea"
+  },
+  "prompts/04_REVIEW_AR.md": {
+    "bytes": 2985,
+    "sha256": "db60f41c959cf4f4c89abd56a6779a09f7003ef395fede284574a3cfe94ef7c8"
+  },
+  "prompts/COMMON_AR.md": {
+    "bytes": 5003,
+    "sha256": "162f42675988f4f79e77edf3b2987c242ad41e047862f2ed3da83dadfef3496e"
+  },
+  "templates/HANDOFF_AR.md": {
+    "bytes": 1911,
+    "sha256": "2a3921344e7fd83af00c925dc5d17a4c33b610bd0b4cd2b90c8d99d37b4f9e37"
+  },
+  "templates/PROJECT_PLAN_AR.md": {
+    "bytes": 3828,
+    "sha256": "d24988e1abcc137e8268f37499a9ea45970619631c08efb38f2c55aba70e5be0"
+  },
+  "templates/evidence.template.json": {
+    "bytes": 892,
+    "sha256": "51e07b546292d0149152401399f09bd0ae982518f10fd1744d54542285746e8f"
+  },
+  "templates/model_routes.json": {
+    "bytes": 1913,
+    "sha256": "78d0ce90bb5c36ab76ec0fd4d75e3f82453381e4ad2f979aed18b4acec62cf71"
+  },
+  "templates/state.template.json": {
+    "bytes": 1478,
+    "sha256": "72446925df0fc2ac7fb5b673d3c78346f6f97c1742e28ff2dc520247621ab25f"
+  },
+  "templates/tasks.template.json": {
+    "bytes": 1224,
+    "sha256": "b8b5bd2008f77b795f058b41ca6106f76b0d6e5bfc0b29bce12ad20731bb6bc1"
+  }
+}

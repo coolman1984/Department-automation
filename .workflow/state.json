@@ -1,0 +1,50 @@
+{
+  "schema_version": "1.0",
+  "project_id": "hr-attendance-control-v1",
+  "plan_version": "V1.0",
+  "contract_version": "V1.0",
+  "route": "available_claude",
+  "phase": "FOUNDATION",
+  "status": "AWAITING_SWITCH",
+  "phase_attempt": 1,
+  "workspace_path": "HR_Attendance_Control_V1",
+  "source_revision": "foundation-local-v1",
+  "worktree_changes": [
+    "Configured attendance ingestion and local history",
+    "Added synthetic acceptance test and samples",
+    "Recorded product decisions and future multi-file boundary"
+  ],
+  "current_task_id": null,
+  "next_task_id": "BLD-01",
+  "reported_model": "غير متحقق داخل أداة المستخدم",
+  "reported_effort": "غير متحقق داخل أداة المستخدم",
+  "identity_verified": false,
+  "phase_gate_results": {
+    "vertical_slice": "PASS",
+    "duplicate_upload": "PASS",
+    "merge_correction": "PASS",
+    "bad_upload_preserves_last_good": "PASS",
+    "windows_start_bat": "NOT_RUN",
+    "protected_excel_desktop_fallback": "NOT_RUN"
+  },
+  "blocking_issue_ids": [],
+  "limits": {
+    "max_local_repairs_per_issue": 2,
+    "max_role_escalations_per_issue": 1,
+    "max_review_repair_rounds": 2,
+    "authorized_currency_budget": null,
+    "authorized_wall_clock_minutes": null,
+    "actual_enforcement": "manual tracking in the selected coding tool"
+  },
+  "usage": {
+    "input_tokens": null,
+    "output_tokens": null,
+    "cached_tokens": null,
+    "cost": null,
+    "currency": null,
+    "measurement_source": "not collected in this foundation run"
+  },
+  "handoff_path": ".workflow/HANDOFF_AR.md",
+  "updated_at": "2026-09-05T00:00:00+00:00",
+  "completion_rule": "The foundation is complete. The product remains incomplete until multi-file HR scope, Windows validation, integration, and independent review finish."
+}

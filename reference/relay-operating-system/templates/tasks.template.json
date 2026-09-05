@@ -1,0 +1,41 @@
+{
+  "schema_version": "1.0",
+  "template_only": true,
+  "tasks": [],
+  "task_shape": {
+    "id": "UNFILLED",
+    "phase": "BUILD",
+    "title_ar": "",
+    "requirement_ids": [],
+    "depends_on": [],
+    "risk": "low",
+    "owner_role": "builder",
+    "contract_version": null,
+    "read_paths": [],
+    "write_paths": [],
+    "protected_paths": [],
+    "acceptance_cases": [],
+    "verification_commands": [],
+    "status": "pending",
+    "attempts": 0,
+    "evidence_paths": [],
+    "source_revision": null,
+    "blocking_reason": null
+  },
+  "allowed_statuses": [
+    "pending",
+    "ready",
+    "running",
+    "verified",
+    "blocked",
+    "reviewed"
+  ],
+  "rules": [
+    "All task IDs are unique; dependency IDs exist and contain no cycle.",
+    "A task is selectable only if dependencies are verified or reviewed and its contract version is current.",
+    "Verified means task checks pass, not that the project is independently reviewed.",
+    "No verification command is trusted until the foundation validates it in the actual environment.",
+    "Every required project outcome must map to at least one task and acceptance case.",
+    "Changing a contract invalidates affected task evidence until rechecked."
+  ]
+}

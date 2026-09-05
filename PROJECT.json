@@ -1,0 +1,120 @@
+{
+  "project": {
+    "name": "HR Attendance Control",
+    "version": "V1.0",
+    "version_name": "Attendance foundation with local update history",
+    "department_pack": "universal",
+    "currency": "",
+    "language": "English",
+    "template_role": "configured_project",
+    "project_status": "foundation_ready"
+  },
+  "refresh": {
+    "mode": "merge",
+    "business_keys": ["attendance_id"],
+    "duplicate_policy": "keep_latest",
+    "allow_empty_replace": false,
+    "keep_source_files": 3,
+    "keep_rollback_snapshots": 5
+  },
+  "validation": {
+    "mode": "flexible",
+    "duplicate_source_columns": "first_non_blank",
+    "duplicate_join_keys": "keep_latest"
+  },
+  "runtime": {
+    "minimum_python": "3.10",
+    "packages": [
+      {
+        "import": "openpyxl",
+        "package": "openpyxl",
+        "purpose": "Read HR attendance XLSX and XLSM workbooks",
+        "required": true
+      }
+    ]
+  },
+  "core_change": {
+    "allow": false,
+    "reason": ""
+  },
+  "excel": {
+    "automatic_protected_files": true,
+    "authorization_wait_seconds": 120,
+    "recalculate_before_read": true,
+    "close_auto_opened_file": true
+  },
+  "history": {
+    "enabled": true,
+    "keep_forever": true,
+    "keep_uploads": 365,
+    "periods": ["daily", "weekly", "monthly"],
+    "period_source": "data",
+    "date_field": "work_date",
+    "dimensions": ["attendance_status", "scheduled_shift_id"],
+    "moving_average_periods": 3,
+    "period_aggregation": "latest"
+  },
+  "sources": [
+    {
+      "id": "attendance",
+      "sheet_name": "TIM_02_DailyAttendance",
+      "header_row": 3,
+      "date_order": "DMY",
+      "read_mode": "auto",
+      "keep_unmapped_columns": false,
+      "required_fields": ["attendance_id", "employee_id", "work_date", "attendance_status"],
+      "critical_fields": ["attendance_id", "employee_id", "work_date", "attendance_status"],
+      "field_types": {
+        "attendance_id": "text",
+        "employee_id": "text",
+        "work_date": "date",
+        "scheduled_shift_id": "text",
+        "worked_minutes": "number",
+        "attendance_status": "text",
+        "late_minutes": "number",
+        "early_leave_minutes": "number",
+        "overtime_eligible_minutes": "number"
+      },
+      "column_aliases": {
+        "attendance_id": ["Attendance_ID", "Attendance ID"],
+        "employee_id": ["Employee_ID", "Employee ID", "Emp ID"],
+        "work_date": ["Work_Date", "Work Date", "Attendance Date"],
+        "scheduled_shift_id": ["Scheduled_Shift_ID", "Scheduled Shift ID", "Shift ID"],
+        "worked_minutes": ["Worked_Minutes", "Worked Minutes"],
+        "attendance_status": ["Attendance_Status", "Attendance Status", "Status"],
+        "late_minutes": ["Late_Minutes", "Late Minutes"],
+        "early_leave_minutes": ["Early_Leave_Minutes", "Early Leave Minutes"],
+        "overtime_eligible_minutes": ["Overtime_Eligible_Minutes", "Overtime Eligible Minutes"]
+      }
+    }
+  ],
+  "joins": [],
+  "overrides": {
+    "filters": [
+      {"field": "work_date", "label": "Work date", "type": "date_range"},
+      {"field": "scheduled_shift_id", "label": "Scheduled shift", "type": "select"},
+      {"field": "attendance_status", "label": "Attendance status", "type": "select"},
+      {"field": "_search", "label": "Search employee or attendance ID", "type": "search"}
+    ],
+    "kpis": [
+      {"id": "employees_observed", "label": "Employees observed", "type": "count_distinct", "field": "employee_id", "format": "number"},
+      {"id": "attendance_records", "label": "Attendance records", "type": "count", "format": "number"},
+      {"id": "present_records", "label": "Present", "type": "count", "where": "attendance_status == 'Present'", "format": "number"},
+      {"id": "absence_records", "label": "Absent", "type": "count", "where": "attendance_status == 'Absent'", "format": "number"},
+      {"id": "leave_records", "label": "Leave", "type": "count", "where": "attendance_status == 'Leave'", "format": "number"},
+      {"id": "attendance_rate", "label": "Present rate", "type": "formula", "formula": "safe_div(present_records, attendance_records) * 100", "format": "percent"},
+      {"id": "late_minutes_total", "label": "Late minutes", "type": "sum", "field": "late_minutes", "format": "number"},
+      {"id": "overtime_eligible_minutes_total", "label": "Eligible overtime minutes", "type": "sum", "field": "overtime_eligible_minutes", "format": "number"}
+    ],
+    "charts": [
+      {"id": "attendance_mix", "title": "Attendance status", "type": "donut", "group_by": "attendance_status", "aggregation": "count", "limit": 8},
+      {"id": "attendance_by_shift", "title": "Attendance records by shift", "type": "bar", "group_by": "scheduled_shift_id", "aggregation": "count", "limit": 12},
+      {"id": "attendance_by_day", "title": "Attendance records by work date", "type": "line", "group_by": "work_date", "aggregation": "count", "limit": 31},
+      {"id": "late_minutes_by_day", "title": "Late minutes by work date", "type": "line", "group_by": "work_date", "value": "late_minutes", "aggregation": "sum", "limit": 31}
+    ],
+    "table": {
+      "columns": ["attendance_id", "employee_id", "work_date", "scheduled_shift_id", "attendance_status", "worked_minutes", "late_minutes", "early_leave_minutes", "overtime_eligible_minutes"],
+      "max_rows": 200
+    }
+  }
+}

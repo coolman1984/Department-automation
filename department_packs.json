@@ -1,0 +1,189 @@
+{
+  "universal": {
+    "source_defaults": {
+      "required_fields": [],
+      "critical_fields": [],
+      "field_types": {},
+      "column_aliases": {},
+      "keep_unmapped_columns": true
+    },
+    "derived_fields": [],
+    "filters": [{"field": "_search", "label": "Search", "type": "search"}],
+    "kpis": [{"id": "records", "label": "Records", "type": "count", "format": "number"}],
+    "charts": [],
+    "table": {"columns": [], "max_rows": 200}
+  },
+  "generic": {
+    "source_defaults": {
+      "required_fields": ["record_id", "department", "category", "amount", "status", "date"],
+      "critical_fields": ["record_id"],
+      "field_types": {"record_id": "text", "department": "text", "category": "text", "amount": "number", "target": "number", "status": "text", "date": "date"},
+      "column_aliases": {
+        "record_id": ["record id", "id", "reference", "transaction id"],
+        "department": ["department", "dept", "team", "function"],
+        "category": ["category", "type", "group"],
+        "amount": ["amount", "value", "cost", "sales"],
+        "target": ["target", "plan", "budget"],
+        "status": ["status", "state"],
+        "date": ["date", "day", "created date", "report date"]
+      }
+    },
+    "derived_fields": [{"name": "variance", "formula": "amount - target", "round": 2}],
+    "filters": [
+      {"field": "date", "label": "Date", "type": "date_range"},
+      {"field": "department", "label": "Department", "type": "select"},
+      {"field": "category", "label": "Category", "type": "select"},
+      {"field": "status", "label": "Status", "type": "select"},
+      {"field": "_search", "label": "Search", "type": "search"}
+    ],
+    "kpis": [
+      {"id": "records", "label": "Records", "type": "count", "format": "number"},
+      {"id": "total_amount", "label": "Total Amount", "type": "sum", "field": "amount", "format": "currency"},
+      {"id": "total_target", "label": "Total Target", "type": "sum", "field": "target", "format": "currency"},
+      {"id": "achievement", "label": "Achievement", "type": "ratio", "numerator": "amount", "denominator": "target", "multiply": 100, "format": "percent"}
+    ],
+    "charts": [
+      {"id": "amount_by_category", "title": "Amount by Category", "type": "bar", "group_by": "category", "value": "amount", "aggregation": "sum", "limit": 10},
+      {"id": "trend", "title": "Daily Trend", "type": "line", "group_by": "date", "value": "amount", "aggregation": "sum", "limit": 24},
+      {"id": "status_mix", "title": "Status Mix", "type": "donut", "group_by": "status", "aggregation": "count", "limit": 8},
+      {"id": "department_performance", "title": "Department Performance", "type": "pareto", "group_by": "department", "value": "amount", "aggregation": "sum", "limit": 10}
+    ],
+    "table": {"columns": ["record_id", "date", "department", "category", "amount", "target", "variance", "status"], "max_rows": 200}
+  },
+  "hr": {
+    "source_defaults": {
+      "required_fields": ["employee_id", "department", "date", "attendance_status"],
+      "critical_fields": ["employee_id", "date"],
+      "field_types": {"employee_id": "text", "department": "text", "date": "date", "attendance_status": "text", "overtime_hours": "number", "training_hours": "number", "exit_flag": "boolean"},
+      "column_aliases": {
+        "employee_id": ["employee id", "emp id", "personnel no", "staff id"],
+        "department": ["department", "dept", "function"],
+        "date": ["date", "attendance date", "day"],
+        "attendance_status": ["attendance status", "status", "attendance"],
+        "overtime_hours": ["overtime hours", "ot hours", "overtime"],
+        "training_hours": ["training hours", "learning hours"],
+        "exit_flag": ["exit flag", "left company", "termination flag"]
+      }
+    },
+    "derived_fields": [],
+    "filters": [{"field": "date", "label": "Date", "type": "date_range"}, {"field": "department", "label": "Department", "type": "select"}, {"field": "attendance_status", "label": "Attendance", "type": "select"}, {"field": "_search", "label": "Search", "type": "search"}],
+    "kpis": [
+      {"id": "headcount", "label": "Employees", "type": "count_distinct", "field": "employee_id", "format": "number"},
+      {"id": "attendance_records", "label": "Attendance Records", "type": "count", "format": "number"},
+      {"id": "overtime", "label": "Overtime Hours", "type": "sum", "field": "overtime_hours", "format": "number"},
+      {"id": "training", "label": "Training Hours", "type": "sum", "field": "training_hours", "format": "number"}
+    ],
+    "charts": [
+      {"id": "attendance_mix", "title": "Attendance Status", "type": "donut", "group_by": "attendance_status", "aggregation": "count", "limit": 8},
+      {"id": "headcount_department", "title": "Employees by Department", "type": "bar", "group_by": "department", "value": "employee_id", "aggregation": "count_distinct", "limit": 12},
+      {"id": "overtime_department", "title": "Overtime by Department", "type": "pareto", "group_by": "department", "value": "overtime_hours", "aggregation": "sum", "limit": 12},
+      {"id": "attendance_trend", "title": "Attendance Trend", "type": "line", "group_by": "date", "aggregation": "count", "limit": 31}
+    ],
+    "table": {"columns": ["employee_id", "date", "department", "attendance_status", "overtime_hours", "training_hours"], "max_rows": 200}
+  },
+  "quality": {
+    "source_defaults": {
+      "required_fields": ["record_id", "date", "line", "model", "inspected_qty", "defect_qty"],
+      "critical_fields": ["record_id", "date"],
+      "field_types": {"record_id": "text", "date": "date", "line": "text", "model": "text", "inspected_qty": "number", "defect_qty": "number", "rework_qty": "number", "defect_type": "text"},
+      "column_aliases": {
+        "record_id": ["record id", "inspection id", "lot id", "id"],
+        "date": ["date", "inspection date", "day"],
+        "line": ["line", "production line"],
+        "model": ["model", "model code", "product"],
+        "inspected_qty": ["inspected qty", "inspection quantity", "checked qty", "total inspected"],
+        "defect_qty": ["defect qty", "defects", "ng qty", "failed qty"],
+        "rework_qty": ["rework qty", "repair qty", "reworked"],
+        "defect_type": ["defect type", "failure mode", "defect"]
+      }
+    },
+    "derived_fields": [
+      {"name": "defect_rate", "formula": "safe_div(defect_qty, inspected_qty) * 100", "round": 3},
+      {"name": "yield_rate", "formula": "safe_div(inspected_qty - defect_qty, inspected_qty) * 100", "round": 3},
+      {"name": "ppm", "formula": "safe_div(defect_qty, inspected_qty) * 1000000", "round": 0}
+    ],
+    "filters": [{"field": "date", "label": "Date", "type": "date_range"}, {"field": "line", "label": "Line", "type": "select"}, {"field": "model", "label": "Model", "type": "select"}, {"field": "defect_type", "label": "Defect", "type": "select"}, {"field": "_search", "label": "Search", "type": "search"}],
+    "kpis": [
+      {"id": "inspected", "label": "Inspected", "type": "sum", "field": "inspected_qty", "format": "number"},
+      {"id": "defects", "label": "Defects", "type": "sum", "field": "defect_qty", "format": "number"},
+      {"id": "defect_rate", "label": "Defect Rate", "type": "ratio", "numerator": "defect_qty", "denominator": "inspected_qty", "multiply": 100, "format": "percent"},
+      {"id": "yield", "label": "Yield", "type": "formula", "formula": "100 - defect_rate", "format": "percent"}
+    ],
+    "charts": [
+      {"id": "defect_pareto", "title": "Defect Pareto", "type": "pareto", "group_by": "defect_type", "value": "defect_qty", "aggregation": "sum", "limit": 12},
+      {"id": "quality_trend", "title": "Defect Trend", "type": "line", "group_by": "date", "value": "defect_qty", "aggregation": "sum", "limit": 31},
+      {"id": "model_quality", "title": "Defects by Model", "type": "bar", "group_by": "model", "value": "defect_qty", "aggregation": "sum", "limit": 12},
+      {"id": "line_model_heat", "title": "Line × Model Heatmap", "type": "heatmap", "group_by": "line", "series_by": "model", "value": "defect_qty", "aggregation": "sum", "limit": 10}
+    ],
+    "table": {"columns": ["record_id", "date", "line", "model", "inspected_qty", "defect_qty", "defect_rate", "yield_rate", "ppm", "defect_type"], "max_rows": 200}
+  },
+  "production": {
+    "source_defaults": {
+      "required_fields": ["record_id", "date", "line", "model", "plan_qty", "actual_qty", "good_qty"],
+      "critical_fields": ["record_id", "date"],
+      "field_types": {"record_id": "text", "date": "date", "line": "text", "shift": "text", "model": "text", "plan_qty": "number", "actual_qty": "number", "good_qty": "number", "planned_minutes": "number", "operating_minutes": "number", "downtime_minutes": "number"},
+      "column_aliases": {
+        "record_id": ["record id", "production id", "id"], "date": ["date", "production date", "day"], "line": ["line", "production line"], "shift": ["shift", "work shift"], "model": ["model", "model code", "product"], "plan_qty": ["plan qty", "planned quantity", "target qty"], "actual_qty": ["actual qty", "production qty", "output qty"], "good_qty": ["good qty", "ok qty", "passed qty"], "planned_minutes": ["planned minutes", "available minutes"], "operating_minutes": ["operating minutes", "run minutes"], "downtime_minutes": ["downtime minutes", "stop minutes"]
+      }
+    },
+    "derived_fields": [
+      {"name": "achievement", "formula": "safe_div(actual_qty, plan_qty) * 100", "round": 2},
+      {"name": "yield_rate", "formula": "safe_div(good_qty, actual_qty) * 100", "round": 2},
+      {"name": "availability", "formula": "safe_div(operating_minutes, planned_minutes) * 100", "round": 2}
+    ],
+    "filters": [{"field": "date", "label": "Date", "type": "date_range"}, {"field": "line", "label": "Line", "type": "select"}, {"field": "shift", "label": "Shift", "type": "select"}, {"field": "model", "label": "Model", "type": "select"}, {"field": "_search", "label": "Search", "type": "search"}],
+    "kpis": [
+      {"id": "plan", "label": "Plan", "type": "sum", "field": "plan_qty", "format": "number"},
+      {"id": "actual", "label": "Actual", "type": "sum", "field": "actual_qty", "format": "number"},
+      {"id": "achievement", "label": "Achievement", "type": "ratio", "numerator": "actual_qty", "denominator": "plan_qty", "multiply": 100, "format": "percent"},
+      {"id": "yield", "label": "Yield", "type": "ratio", "numerator": "good_qty", "denominator": "actual_qty", "multiply": 100, "format": "percent"},
+      {"id": "downtime", "label": "Downtime Minutes", "type": "sum", "field": "downtime_minutes", "format": "number"}
+    ],
+    "charts": [
+      {"id": "plan_actual", "title": "Plan vs Actual by Line", "type": "stacked", "group_by": "line", "series_by": "_measure", "measures": [{"name": "Plan", "field": "plan_qty"}, {"name": "Actual", "field": "actual_qty"}], "aggregation": "sum", "limit": 12},
+      {"id": "output_trend", "title": "Production Trend", "type": "line", "group_by": "date", "value": "actual_qty", "aggregation": "sum", "limit": 31},
+      {"id": "downtime_line", "title": "Downtime by Line", "type": "pareto", "group_by": "line", "value": "downtime_minutes", "aggregation": "sum", "limit": 12},
+      {"id": "model_mix", "title": "Model Mix", "type": "donut", "group_by": "model", "value": "actual_qty", "aggregation": "sum", "limit": 10}
+    ],
+    "table": {"columns": ["record_id", "date", "line", "shift", "model", "plan_qty", "actual_qty", "achievement", "good_qty", "yield_rate", "downtime_minutes"], "max_rows": 200}
+  },
+  "supply_chain": {
+    "source_defaults": {
+      "required_fields": ["record_id", "date", "item", "stock_qty", "daily_usage"],
+      "critical_fields": ["record_id", "date", "item"],
+      "field_types": {"record_id": "text", "date": "date", "item": "text", "category": "text", "supplier": "text", "stock_qty": "number", "daily_usage": "number", "shortage_qty": "number", "lead_time_days": "number", "delivery_status": "text"},
+      "column_aliases": {"record_id": ["record id", "id", "snapshot id"], "date": ["date", "snapshot date", "day"], "item": ["item", "material", "part number", "sku"], "category": ["category", "material group"], "supplier": ["supplier", "vendor"], "stock_qty": ["stock qty", "on hand", "inventory qty"], "daily_usage": ["daily usage", "average daily usage", "consumption"], "shortage_qty": ["shortage qty", "gap qty"], "lead_time_days": ["lead time days", "lead time"], "delivery_status": ["delivery status", "status"]}
+    },
+    "derived_fields": [{"name": "coverage_days", "formula": "safe_div(stock_qty, daily_usage)", "round": 1}],
+    "filters": [{"field": "date", "label": "Date", "type": "date_range"}, {"field": "category", "label": "Category", "type": "select"}, {"field": "supplier", "label": "Supplier", "type": "select"}, {"field": "delivery_status", "label": "Status", "type": "select"}, {"field": "_search", "label": "Search", "type": "search"}],
+    "kpis": [{"id": "items", "label": "Items", "type": "count_distinct", "field": "item", "format": "number"}, {"id": "stock", "label": "Stock Quantity", "type": "sum", "field": "stock_qty", "format": "number"}, {"id": "shortage", "label": "Shortage Quantity", "type": "sum", "field": "shortage_qty", "format": "number"}, {"id": "coverage", "label": "Average Coverage", "type": "avg", "field": "coverage_days", "format": "days"}],
+    "charts": [{"id": "shortage_item", "title": "Shortage Pareto", "type": "pareto", "group_by": "item", "value": "shortage_qty", "aggregation": "sum", "limit": 12}, {"id": "stock_category", "title": "Stock by Category", "type": "bar", "group_by": "category", "value": "stock_qty", "aggregation": "sum", "limit": 10}, {"id": "delivery_mix", "title": "Delivery Status", "type": "donut", "group_by": "delivery_status", "aggregation": "count", "limit": 8}, {"id": "stock_trend", "title": "Stock Trend", "type": "line", "group_by": "date", "value": "stock_qty", "aggregation": "sum", "limit": 31}],
+    "table": {"columns": ["record_id", "date", "item", "category", "supplier", "stock_qty", "daily_usage", "coverage_days", "shortage_qty", "delivery_status"], "max_rows": 200}
+  },
+  "finance": {
+    "source_defaults": {
+      "required_fields": ["record_id", "date", "department", "account", "actual", "budget"],
+      "critical_fields": ["record_id", "date"],
+      "field_types": {"record_id": "text", "date": "date", "department": "text", "account": "text", "category": "text", "actual": "number", "budget": "number", "revenue": "number", "cost": "number"},
+      "column_aliases": {"record_id": ["record id", "document no", "transaction id", "id"], "date": ["date", "posting date", "period date"], "department": ["department", "cost center", "function"], "account": ["account", "gl account", "account name"], "category": ["category", "account group"], "actual": ["actual", "actual amount", "amount"], "budget": ["budget", "plan", "budget amount"], "revenue": ["revenue", "sales"], "cost": ["cost", "expense"]}
+    },
+    "derived_fields": [{"name": "variance", "formula": "actual - budget", "round": 2}, {"name": "margin", "formula": "revenue - cost", "round": 2}, {"name": "margin_rate", "formula": "safe_div(revenue - cost, revenue) * 100", "round": 2}],
+    "filters": [{"field": "date", "label": "Date", "type": "date_range"}, {"field": "department", "label": "Department", "type": "select"}, {"field": "category", "label": "Category", "type": "select"}, {"field": "account", "label": "Account", "type": "select"}, {"field": "_search", "label": "Search", "type": "search"}],
+    "kpis": [{"id": "actual", "label": "Actual", "type": "sum", "field": "actual", "format": "currency"}, {"id": "budget", "label": "Budget", "type": "sum", "field": "budget", "format": "currency"}, {"id": "variance", "label": "Variance", "type": "sum", "field": "variance", "format": "currency"}, {"id": "margin", "label": "Margin", "type": "sum", "field": "margin", "format": "currency"}],
+    "charts": [{"id": "department_variance", "title": "Variance by Department", "type": "bar", "group_by": "department", "value": "variance", "aggregation": "sum", "limit": 12}, {"id": "actual_trend", "title": "Actual Trend", "type": "line", "group_by": "date", "value": "actual", "aggregation": "sum", "limit": 24}, {"id": "category_mix", "title": "Actual by Category", "type": "donut", "group_by": "category", "value": "actual", "aggregation": "sum", "limit": 10}, {"id": "account_pareto", "title": "Account Pareto", "type": "pareto", "group_by": "account", "value": "actual", "aggregation": "sum", "limit": 12}],
+    "table": {"columns": ["record_id", "date", "department", "account", "category", "actual", "budget", "variance", "revenue", "cost", "margin"], "max_rows": 200}
+  },
+  "sales": {
+    "source_defaults": {
+      "required_fields": ["record_id", "date", "region", "product", "sales_amount", "target"],
+      "critical_fields": ["record_id", "date"],
+      "field_types": {"record_id": "text", "date": "date", "region": "text", "salesperson": "text", "customer": "text", "product": "text", "quantity": "number", "sales_amount": "number", "target": "number"},
+      "column_aliases": {"record_id": ["record id", "invoice no", "order id", "id"], "date": ["date", "sales date", "invoice date"], "region": ["region", "area", "market"], "salesperson": ["salesperson", "sales rep", "owner"], "customer": ["customer", "customer name", "account"], "product": ["product", "item", "model"], "quantity": ["quantity", "qty", "units"], "sales_amount": ["sales amount", "revenue", "net sales", "amount"], "target": ["target", "sales target", "plan"]}
+    },
+    "derived_fields": [{"name": "achievement", "formula": "safe_div(sales_amount, target) * 100", "round": 2}],
+    "filters": [{"field": "date", "label": "Date", "type": "date_range"}, {"field": "region", "label": "Region", "type": "select"}, {"field": "salesperson", "label": "Salesperson", "type": "select"}, {"field": "product", "label": "Product", "type": "select"}, {"field": "_search", "label": "Search", "type": "search"}],
+    "kpis": [{"id": "sales", "label": "Sales", "type": "sum", "field": "sales_amount", "format": "currency"}, {"id": "target", "label": "Target", "type": "sum", "field": "target", "format": "currency"}, {"id": "achievement", "label": "Achievement", "type": "ratio", "numerator": "sales_amount", "denominator": "target", "multiply": 100, "format": "percent"}, {"id": "customers", "label": "Customers", "type": "count_distinct", "field": "customer", "format": "number"}],
+    "charts": [{"id": "sales_trend", "title": "Sales Trend", "type": "line", "group_by": "date", "value": "sales_amount", "aggregation": "sum", "limit": 31}, {"id": "region_sales", "title": "Sales by Region", "type": "bar", "group_by": "region", "value": "sales_amount", "aggregation": "sum", "limit": 12}, {"id": "product_mix", "title": "Product Mix", "type": "donut", "group_by": "product", "value": "sales_amount", "aggregation": "sum", "limit": 10}, {"id": "salesperson_pareto", "title": "Salesperson Pareto", "type": "pareto", "group_by": "salesperson", "value": "sales_amount", "aggregation": "sum", "limit": 12}],
+    "table": {"columns": ["record_id", "date", "region", "salesperson", "customer", "product", "quantity", "sales_amount", "target", "achievement"], "max_rows": 200}
+  }
+}

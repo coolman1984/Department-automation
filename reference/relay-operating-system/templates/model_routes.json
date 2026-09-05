@@ -1,0 +1,67 @@
+{
+  "version": "1.0",
+  "as_of": "2026-09-05",
+  "status": "proposed_not_benchmarked",
+  "execution_mode": "manual_model_switch",
+  "note_ar": "اختيارات أدوار؛ ليست إعدادات واجهة برمجية ولا تبدل الموديلات وحدها. يضبط الموديل الفعلي في الأداة ويتحقق من توفره.",
+  "routes": {
+    "economy": [
+      {
+        "phase": "FOUNDATION",
+        "model_label": "GPT-5.6 Terra",
+        "effort": "high"
+      },
+      {
+        "phase": "BUILD",
+        "model_label": "GPT-5.6 Luna",
+        "effort": "high"
+      },
+      {
+        "phase": "INTEGRATE",
+        "model_label": "GPT-5.6 Terra",
+        "effort": "high"
+      },
+      {
+        "phase": "REVIEW",
+        "model_label": "GPT-5.6 Sol",
+        "effort": "high"
+      }
+    ],
+    "available_claude": [
+      {
+        "phase": "FOUNDATION",
+        "model_label": "Claude Opus 5",
+        "effort": "high"
+      },
+      {
+        "phase": "BUILD",
+        "model_label": "Claude Sonnet 5",
+        "effort": "medium",
+        "condition": "pilot_quality_holds",
+        "fallback_effort": "high"
+      },
+      {
+        "phase": "INTEGRATE",
+        "model_label": "Claude Sonnet 5",
+        "effort": "high"
+      },
+      {
+        "phase": "REVIEW",
+        "model_label": "GPT-5.6 Sol",
+        "effort": "high",
+        "fallback_model_label": "Claude Opus 5",
+        "fallback_effort": "high",
+        "fresh_reviewer_session": true
+      }
+    ]
+  },
+  "exceptional_escalation": {
+    "model_label": "User-confirmed Claude Fable version",
+    "effort": "high",
+    "default_enabled": false,
+    "requires": "availability_and_user_budget"
+  },
+  "selection_policy": "choose_one_route_per_project; compare_effective_completion_cost; no_assumed_unlimited_subscription",
+  "provider_model_id": null,
+  "identity_source": "tool_report_or_unverified"
+}

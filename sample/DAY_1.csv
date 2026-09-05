@@ -1,0 +1,6 @@
+Record ID,Department,Category,Amount,Target,Status,Date
+R001,Operations,Materials,1250,1200,Open,2026-08-30
+R002,Quality,Inspection,800,750,Closed,2026-08-30
+R003,Operations,Energy,450,500,Open,2026-08-30
+R004,Supply Chain,Logistics,1100,1000,Delayed,2026-08-30
+R005,Quality,Inspection,950,900,Closed,2026-08-30

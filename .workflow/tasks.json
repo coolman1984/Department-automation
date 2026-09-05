@@ -1,0 +1,71 @@
+{
+  "schema_version": "1.0",
+  "tasks": [
+    {
+      "id": "FND-01",
+      "phase": "FOUNDATION",
+      "title_ar": "تثبيت مسار حضور كامل قابل للتشغيل",
+      "requirement_ids": ["HR-R01", "HR-R02", "HR-R03", "HR-R04"],
+      "depends_on": [],
+      "risk": "high",
+      "owner_role": "foundation",
+      "contract_version": "V1.0",
+      "read_paths": ["PROJECT.json", "sample/HR_Time_Attendance_Demo.xlsx"],
+      "write_paths": ["PROJECT.json", "sample/", "project_memory/"],
+      "protected_paths": ["engine.py", "calculation_engine.py", "dashboard.html"],
+      "acceptance_cases": ["Read 200 synthetic attendance rows", "Reject repeat bytes", "Preserve previous result on a malformed file"],
+      "verification_commands": ["python TEST_HR_FOUNDATION.py"],
+      "status": "verified",
+      "attempts": 1,
+      "evidence_paths": [".workflow/evidence/foundation-results.json"],
+      "source_revision": "foundation-local-v1",
+      "blocking_reason": null
+    },
+    {
+      "id": "BLD-01",
+      "phase": "BUILD",
+      "title_ar": "تجربة منفذ اقتصادي على تحسين محدود غير حساس",
+      "requirement_ids": ["OPS-R01"],
+      "depends_on": ["FND-01"],
+      "risk": "low",
+      "owner_role": "builder",
+      "contract_version": "V1.0",
+      "read_paths": ["PROJECT_GUIDE.md", "PROJECT.json", ".workflow/state.json", "TEST_HR_FOUNDATION.py"],
+      "write_paths": ["documentation or one low-risk presentation improvement only"],
+      "protected_paths": ["PROJECT.json", "engine.py", "calculation_engine.py", "dashboard.html"],
+      "acceptance_cases": ["No change to ingestion, business keys, or acceptance totals", "Foundation test remains green"],
+      "verification_commands": ["python TEST_HR_FOUNDATION.py"],
+      "status": "ready",
+      "attempts": 0,
+      "evidence_paths": [],
+      "source_revision": null,
+      "blocking_reason": "This is a calibration task. Choose a real low-risk improvement after the selected builder inspects the project."
+    },
+    {
+      "id": "INT-01",
+      "phase": "INTEGRATE",
+      "title_ar": "تحديد وتنفيذ مدخل ملفات الموارد البشرية المتعددة",
+      "requirement_ids": ["HR-R05"],
+      "depends_on": ["BLD-01"],
+      "risk": "high",
+      "owner_role": "integrator",
+      "contract_version": "V1.0",
+      "read_paths": ["PROJECT_GUIDE.md", "project_memory/PROJECT_LOG.md", "inputs/hr-factory-synthetic-dataset/"],
+      "write_paths": ["to be selected after source-process decision"],
+      "protected_paths": ["engine.py", "calculation_engine.py", "PROJECT.json"],
+      "acceptance_cases": ["Upload attendance, employee, roster and leave sources without accidental overwrite", "Update correction retains history", "Incomplete source is visible in result state"],
+      "verification_commands": [],
+      "status": "blocked",
+      "attempts": 0,
+      "evidence_paths": [],
+      "source_revision": null,
+      "blocking_reason": "Needs the actual daily-delivery shape: one workbook, multiple files, or a ZIP."
+    }
+  ],
+  "allowed_statuses": ["pending", "ready", "running", "verified", "blocked", "reviewed"],
+  "rules": [
+    "Task evidence applies only to its recorded project revision and contract version.",
+    "A builder does not change tests or protected paths to close a task without returning it to the foundation or integration role.",
+    "A blocked business-input decision is recorded rather than guessed."
+  ]
+}

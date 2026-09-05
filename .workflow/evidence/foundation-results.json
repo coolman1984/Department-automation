@@ -1,0 +1,19 @@
+{
+  "record_id": "EVD-FND-01",
+  "task_id": "FND-01",
+  "requirement_ids": ["HR-R01", "HR-R02", "HR-R03", "HR-R04"],
+  "source_revision": "foundation-local-v1",
+  "command": "python CHECK_ENVIRONMENT.py && python SMOKE_TEST.py && python TEST_HR_FOUNDATION.py && python BUILD_PROJECT.py",
+  "working_directory": "HR_Attendance_Control_V1",
+  "environment": "Linux build workspace; Windows runtime not tested",
+  "result": "PASS",
+  "summary_ar": "قراءة ٢٠٠ سجل صناعي، منع تكرار نفس البايتات، دمج تصحيح وسجل جديد إلى ٢٠١، والحفاظ على آخر نتيجة عند ملف معيب. نجح كذلك اختبار واجهة التطبيق المحلية برمجيًا وبناء حزمة سليمة بحجم ٠٫٣٩ ميغابايت.",
+  "expected_result_source": "TEST_HR_FOUNDATION.py assertions",
+  "independent_check": false,
+  "additional_checks": [
+    "python SMOKE_TEST.py: PASS",
+    "اختبار HTTP محلي: الحالة ٠ ثم رفع ٢٠٠ وتسوية صحيحة: PASS",
+    "unzip -t HR-Attendance-Control-V1.0.zip: PASS"
+  ],
+  "limitations": ["لا يثبت هذا الاختبار تشغيل START.bat على ويندوز", "لا يثبت فتح إكسل المحمي", "لا يربط ملفات الموارد البشرية المتعددة"]
+}

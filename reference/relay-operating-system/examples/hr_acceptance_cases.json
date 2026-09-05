@@ -1,0 +1,240 @@
+{
+  "version": "1.0",
+  "kind": "synthetic_acceptance_spec_not_executable_tests",
+  "note_ar": "أمثلة مصطنعة جديدة لشرح معيار القبول؛ ليست نتائج الحزمة السابقة. يجب تحويلها لاختبارات فعلية أثناء التأسيس.",
+  "policy": {
+    "record_key": [
+      "employee_id",
+      "work_date"
+    ],
+    "revision_policy": "higher_source_revision_wins; identical_revision_with_different_payload_is_blocked",
+    "event_date": "work_date",
+    "received_at": "stored_separately",
+    "missing_row_means_delete": false,
+    "delete_requires": "explicit_authorized_tombstone",
+    "preserve_prior_versions": true,
+    "absence_rule": "only_explicit_absent_record_counts; missing_data_is_unknown",
+    "isolation": "Each case starts in a fresh store, then applies only its prerequisite chain.",
+    "numeric_rules": "Late minutes sum from effective records for the selected work date."
+  },
+  "employees": [
+    {
+      "employee_id": "E01",
+      "active": true
+    },
+    {
+      "employee_id": "E02",
+      "active": true
+    },
+    {
+      "employee_id": "E03",
+      "active": true
+    }
+  ],
+  "day_one": [
+    {
+      "employee_id": "E01",
+      "work_date": "2026-09-05",
+      "revision": 1,
+      "status": "present",
+      "late_minutes": 10
+    },
+    {
+      "employee_id": "E02",
+      "work_date": "2026-09-05",
+      "revision": 1,
+      "status": "absent",
+      "late_minutes": 0
+    },
+    {
+      "employee_id": "E03",
+      "work_date": "2026-09-05",
+      "revision": 1,
+      "status": "present",
+      "late_minutes": 0
+    }
+  ],
+  "day_two": [
+    {
+      "employee_id": "E01",
+      "work_date": "2026-09-06",
+      "revision": 1,
+      "status": "present",
+      "late_minutes": 0
+    },
+    {
+      "employee_id": "E02",
+      "work_date": "2026-09-06",
+      "revision": 1,
+      "status": "present",
+      "late_minutes": 0
+    },
+    {
+      "employee_id": "E03",
+      "work_date": "2026-09-06",
+      "revision": 1,
+      "status": "present",
+      "late_minutes": 0
+    }
+  ],
+  "cases": [
+    {
+      "id": "HR-A01",
+      "action": "initial_import",
+      "input": "day_one",
+      "expect": {
+        "attendance_records": 3,
+        "present": 2,
+        "absent": 1,
+        "late_minutes_total": 10
+      }
+    },
+    {
+      "id": "HR-A02",
+      "action": "reimport_same_bytes",
+      "input": "day_one",
+      "depends_on": "HR-A01",
+      "expect": {
+        "attendance_records": 3,
+        "metric_changes": 0,
+        "new_business_versions": 0
+      },
+      "note_ar": "سجل محاولة التحميل يجوز أن يزيد؛ سجلات الأعمال لا تتكرر."
+    },
+    {
+      "id": "HR-A03",
+      "action": "rename_file_reimport_same_bytes",
+      "input": "day_one",
+      "depends_on": "HR-A01",
+      "expect": {
+        "attendance_records": 3,
+        "metric_changes": 0
+      }
+    },
+    {
+      "id": "HR-A04",
+      "action": "import_next_day",
+      "input": "day_two",
+      "depends_on": "HR-A01",
+      "expect": {
+        "attendance_records": 6,
+        "day_one_present": 2,
+        "day_two_present": 3
+      }
+    },
+    {
+      "id": "HR-A05",
+      "action": "apply_late_correction",
+      "depends_on": "HR-A01",
+      "input": {
+        "employee_id": "E02",
+        "work_date": "2026-09-05",
+        "revision": 2,
+        "status": "present",
+        "late_minutes": 0
+      },
+      "expect": {
+        "latest_day_one_present": 3,
+        "latest_day_one_absent": 0,
+        "latest_day_one_late_minutes_total": 10,
+        "original_day_one_present": 2,
+        "original_day_one_absent": 1,
+        "effective_records_day_one": 3
+      },
+      "note_ar": "سجل تاريخ التصحيح ووقت وصوله. احتفظ بالنسخة السابقة دون عدّ النسختين كحضورين."
+    },
+    {
+      "id": "HR-A06",
+      "action": "repeat_identical_correction",
+      "depends_on": "HR-A05",
+      "expect": {
+        "additional_business_versions": 0
+      }
+    },
+    {
+      "id": "HR-A07",
+      "action": "import_lower_priority_old_revision",
+      "depends_on": "HR-A05",
+      "input": "day_one",
+      "expect": {
+        "latest_day_one_present": 3,
+        "latest_day_one_absent": 0
+      },
+      "note_ar": "هذه النتيجة تفترض سياسة أولوية إصدار المصدر المعتمدة في المثال."
+    },
+    {
+      "id": "HR-A08",
+      "action": "partial_update_missing_employee",
+      "depends_on": "HR-A01",
+      "input": {
+        "mode": "delta",
+        "rows": [
+          {
+            "employee_id": "E01",
+            "work_date": "2026-09-05",
+            "revision": 2,
+            "status": "present",
+            "late_minutes": 0
+          }
+        ]
+      },
+      "expect": {
+        "effective_records_day_one": 3,
+        "E02_remains": true,
+        "E03_remains": true
+      }
+    },
+    {
+      "id": "HR-A09",
+      "action": "ambiguous_incomplete_full_snapshot",
+      "depends_on": "HR-A01",
+      "input": {
+        "mode": "snapshot",
+        "declared_row_count": 3,
+        "received_row_count": 2
+      },
+      "expect": {
+        "published_changes": 0,
+        "previous_valid_state_preserved": true,
+        "load_result": "blocked"
+      }
+    },
+    {
+      "id": "HR-A10",
+      "action": "unknown_employee_reference",
+      "input": {
+        "employee_id": "E99",
+        "work_date": "2026-09-05",
+        "revision": 1,
+        "status": "present",
+        "late_minutes": 0
+      },
+      "expect": {
+        "accepted_attendance_rows": 0,
+        "issue_created": true
+      }
+    },
+    {
+      "id": "HR-A11",
+      "action": "simulate_failure_before_commit",
+      "depends_on": "HR-A01",
+      "input": "day_two",
+      "expect": {
+        "published_day_two_rows": 0,
+        "day_one_rows": 3,
+        "retry_produces_total_rows": 6
+      },
+      "note_ar": "يطبق المنفذ حقن الفشل قبل اعتماد العملية، ثم يتحقق من حالة التخزين وإعادة المحاولة."
+    },
+    {
+      "id": "HR-A12",
+      "action": "restart_application",
+      "depends_on": "HR-A05",
+      "expect": {
+        "latest_day_one_present": 3,
+        "original_day_one_present": 2,
+        "source_and_revision_trace_preserved": true
+      }
+    }
+  ]
+}

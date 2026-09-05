@@ -1,0 +1,56 @@
+{
+  "schema_version": "1.0",
+  "template_only": true,
+  "project_id": null,
+  "plan_version": null,
+  "contract_version": null,
+  "route": null,
+  "phase": "FOUNDATION",
+  "status": "READY",
+  "phase_attempt": 0,
+  "allowed_phases": [
+    "FOUNDATION",
+    "BUILD",
+    "INTEGRATE",
+    "REVIEW"
+  ],
+  "allowed_statuses": [
+    "READY",
+    "RUNNING",
+    "AWAITING_SWITCH",
+    "BLOCKED",
+    "AWAITING_REVIEW",
+    "REPAIR_REQUIRED",
+    "COMPLETE"
+  ],
+  "workspace_path": null,
+  "source_revision": null,
+  "worktree_changes": [],
+  "current_task_id": null,
+  "next_task_id": null,
+  "reported_model": null,
+  "reported_effort": null,
+  "identity_verified": false,
+  "phase_gate_results": {},
+  "blocking_issue_ids": [],
+  "limits": {
+    "max_local_repairs_per_issue": 2,
+    "max_role_escalations_per_issue": 1,
+    "max_review_repair_rounds": 2,
+    "authorized_currency_budget": null,
+    "authorized_wall_clock_minutes": null,
+    "actual_enforcement": "not_implemented_by_this_template"
+  },
+  "usage": {
+    "input_tokens": null,
+    "output_tokens": null,
+    "cached_tokens": null,
+    "cost": null,
+    "currency": null,
+    "measurement_source": null
+  },
+  "handoff_path": "HANDOFF_AR.md",
+  "updated_at": null,
+  "startup_rule": "Do not execute this template; foundation must instantiate it from the actual project.",
+  "completion_rule": "All required acceptance checks pass on current candidate, independent review approves, no open critical/high issues."
+}
