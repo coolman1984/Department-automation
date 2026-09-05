@@ -20,6 +20,8 @@ import webbrowser
 import zlib
 from collections import defaultdict
 from datetime import datetime
+from email import policy
+from email.parser import BytesParser
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
@@ -212,7 +214,7 @@ def process_file(path, source_name=None, auxiliary_paths=None):
     joined = calc.join_sources(source_rows, cfg)
     warnings.extend(cfg.pop("_runtime_warnings", []))
     auxiliary_report = None
-    if auxiliary_paths:
+    if auxiliary_paths is not None:
         joined, auxiliary_report = calc.process_auxiliary_sources(joined, auxiliary_paths, cfg)
         warnings.extend(auxiliary_report.get("warnings", []))
     calculated, bad, notes = calc.apply_logic(joined, cfg); rejected.extend({**item, "source": primary_id} for item in bad); warnings.extend(notes)
@@ -327,6 +329,19 @@ def csv_bytes(rows, columns):
     output = io.StringIO(newline=""); writer = csv.DictWriter(output, fieldnames=columns, extrasaction="ignore"); writer.writeheader(); writer.writerows(rows); return output.getvalue().encode("utf-8-sig")
 
 
+def parse_multipart(body, content_type):
+    """Parse a multipart/form-data body into {field_name: {"filename": ..., "content": bytes}}. Reuses the standard library's MIME parser instead of a hand-rolled one, for correctness with real browser boundaries and encodings."""
+    header = f"Content-Type: {content_type}\r\nMIME-Version: 1.0\r\n\r\n".encode("ascii", errors="ignore")
+    message = BytesParser(policy=policy.default).parsebytes(header + body)
+    fields = {}
+    if not message.is_multipart(): return fields
+    for part in message.iter_parts():
+        name = part.get_param("name", header="content-disposition")
+        if not name: continue
+        fields[name] = {"filename": part.get_filename(), "content": part.get_payload(decode=True) or b""}
+    return fields
+
+
 class Handler(BaseHTTPRequestHandler):
     def send_json(self, payload, status=200):
         body = json.dumps(payload, ensure_ascii=False, default=str).encode(); self.send_response(status); self.send_header("Content-Type", "application/json; charset=utf-8"); self.send_header("Content-Length", str(len(body))); self.end_headers(); self.wfile.write(body)
@@ -353,6 +368,7 @@ class Handler(BaseHTTPRequestHandler):
             if route == "/api/rollback": return self.send_json(rollback(int(self.read_json().get("run_id"))))
             if route == "/api/export":
                 filters = self.read_json().get("filters", {}); rows = calc.filter_rows(current_rows(), filters); columns = config().get("table", {}).get("columns", []) or (list(rows[0]) if rows else []); return self.send_csv(csv_bytes(rows, columns), "filtered_report.csv")
+            if route == "/api/upload_multi": return self._handle_upload_multi()
             if route != "/api/upload": return self.send_error(404)
             length = int(self.headers.get("Content-Length", "0"))
             if not 0 < length <= MAX_UPLOAD: return self.send_json({"error": "File is empty or exceeds 150 MB"}, 400)
@@ -381,6 +397,35 @@ class Handler(BaseHTTPRequestHandler):
         except Exception as exc:
             _runtime_log(f"ERROR | route={route} | type={type(exc).__name__} | message={exc}")
             return self.send_json({"error": friendly_error(exc)}, 400)
+    def _handle_upload_multi(self):
+        """INT-03: accept attendance plus optional employee/roster/leave files uploaded together as multipart/form-data, one field per source id."""
+        content_type = self.headers.get("Content-Type", "")
+        if "multipart/form-data" not in content_type: return self.send_json({"error": "Use multipart/form-data with one field per file (attendance, employee, roster, leave)"}, 400)
+        length = int(self.headers.get("Content-Length", "0"))
+        if not 0 < length <= MAX_UPLOAD: return self.send_json({"error": "Upload is empty or exceeds 150 MB"}, 400)
+        body = self.rfile.read(length)
+        fields = parse_multipart(body, content_type)
+        attendance = fields.get("attendance")
+        if not attendance or not attendance["content"]: return self.send_json({"error": "The attendance file is required"}, 400)
+        allowed_suffixes = (".xlsx", ".xlsm", ".xls", ".xlsb", ".csv")
+        temp_dir = tempfile.TemporaryDirectory(prefix="excel_app_multi_")
+        try:
+            saved = {}
+            for role in ("attendance", "employee", "roster", "leave"):
+                item = fields.get(role)
+                if not item or not item["content"]: continue
+                original_name = Path(item["filename"] or f"{role}.xlsx").name
+                suffix = Path(original_name).suffix.lower()
+                if suffix not in allowed_suffixes: return self.send_json({"error": f"{role} file: use XLSX, XLSM, XLS, XLSB or CSV"}, 400)
+                path = Path(temp_dir.name) / f"{role}{suffix}"
+                path.write_bytes(item["content"])
+                saved[role] = (path, original_name)
+            attendance_path, attendance_name = saved.pop("attendance")
+            auxiliary_paths = {role: path for role, (path, _) in saved.items()}
+            return self.send_json(process_file(attendance_path, attendance_name, auxiliary_paths=auxiliary_paths))
+        finally:
+            try: temp_dir.cleanup()
+            except Exception: pass
     def log_message(self, fmt, *args): return
 
 

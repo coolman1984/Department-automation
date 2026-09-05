@@ -80,6 +80,26 @@
       "evidence_paths": [".workflow/evidence/int-02-results.json"],
       "source_revision": "foundation-local-v1",
       "blocking_reason": "Roster is now linked to attendance by a composite key (employee_id + work_date); leave is linked by date-range matching against approved, non-cancelled requests, with a deterministic tie-break so an employee with multiple leave requests never produces duplicate attendance rows. All five acceptance cases (roster match, roster no-match, leave overlap, multi-request no-duplication, and cancelled/pending exclusion) are tested and pass, alongside the unchanged foundation and INT-01 tests. Still open: no dashboard.html upload UI for multiple files; whether production truly splits leave into its own file is unconfirmed."
+    },
+    {
+      "id": "INT-03",
+      "phase": "INTEGRATE",
+      "title_ar": "بناء واجهة رفع الأربع ملفات معًا في dashboard.html",
+      "requirement_ids": ["HR-R05"],
+      "depends_on": ["INT-02"],
+      "risk": "medium",
+      "owner_role": "integrator",
+      "contract_version": "V1.0",
+      "read_paths": ["dashboard.html", "engine.py"],
+      "write_paths": ["engine.py", "dashboard.html", "a new INT-03 test file"],
+      "protected_paths": [],
+      "acceptance_cases": ["A real browser can select four files and upload them together through the dashboard UI, not just through a direct Python call", "The old single-file upload control keeps working unchanged", "A missing auxiliary source and an unknown-employee warning are both visible on screen after a multi-file upload", "An unsupported file extension is rejected with a clear message from the same UI flow"],
+      "verification_commands": ["python TEST_HR_FOUNDATION.py", "python SMOKE_TEST.py", "python TEST_INT01_MULTI_SOURCE.py", "python TEST_INT02_ROSTER_LEAVE_LINK.py", "python TEST_INT03_HTTP_MULTI_UPLOAD.py", "python BUILD_PROJECT.py"],
+      "status": "verified",
+      "attempts": 1,
+      "evidence_paths": [".workflow/evidence/int-03-results.json"],
+      "source_revision": "foundation-local-v1",
+      "blocking_reason": "A new /api/upload_multi endpoint (multipart/form-data, stdlib email parser only, no new runtime dependency) and a new 'Upload HR files together' panel in dashboard.html let a user pick attendance plus optional employee/roster/leave files and upload them together with one click. Verified end to end in a real Chromium browser via Playwright (screenshots taken) and with a standard-library-only HTTP test. The old single-file upload path is unchanged and still tested green. Still open: Windows validation, a real (non-synthetic) daily file sample, and whether production truly splits leave into its own file."
     }
   ],
   "allowed_statuses": ["pending", "ready", "running", "verified", "blocked", "reviewed"],

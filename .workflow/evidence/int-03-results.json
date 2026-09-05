@@ -1,0 +1,28 @@
+{
+  "record_id": "EVD-INT-03",
+  "task_id": "INT-03",
+  "requirement_ids": ["HR-R05"],
+  "source_revision": "foundation-local-v1",
+  "date": "2026-09-05",
+  "change_summary_ar": "أُضيف مسار HTTP جديد /api/upload_multi في engine.py (multipart/form-data، بمحلل من المكتبة القياسية email فقط، بدون أي تبعية خارجية جديدة) يستقبل ملف الحضور مع الموظف والوردية والإجازة الاختياريين في طلب واحد. أُضيفت لوحة جديدة \"Upload HR files together\" في dashboard.html بأربع خانات رفع وزر واحد يرسل البيانات عبر FormData. واجهة الرفع الفردي القديمة لم تتغير.",
+  "files_changed": ["engine.py", "dashboard.html", "PROJECT.json", "LOCKED_CORE.json", "TEST_INT03_HTTP_MULTI_UPLOAD.py"],
+  "protected_paths_touched": ["engine.py", "dashboard.html", "PROJECT.json"],
+  "core_change_reason": "See PROJECT.json core_change.reason (INT-03 section).",
+  "design_note_ar": "أول نسخة من اختبار HTTP استخدمت مكتبة requests الخارجية. اكتُشف أثناء الفحص أن CHECK_ENVIRONMENT.py يفحص كل ملفات .py في المشروع (بما فيها ملفات الاختبار) ويعتبر أي استيراد غير قياسي 'مطلوبًا لتشغيل البرنامج' — فكان هذا سيُظهر لأي مستخدم يشغّل الفحص على جهازه رسالة خاطئة بأن requests مطلوبة، رغم أن البرنامج الفعلي (engine.py) لا يستخدمها إطلاقًا. أُعيدت كتابة الاختبار بالكامل باستخدام urllib فقط (مكتبة قياسية) لبناء طلب multipart يدويًا، وتأكدنا من زوال المشكلة بإزالة requests من البيئة وإعادة تشغيل CHECK_ENVIRONMENT.py — رجع نظيفًا (openpyxl فقط).",
+  "commands": ["python TEST_HR_FOUNDATION.py", "python SMOKE_TEST.py", "python TEST_INT01_MULTI_SOURCE.py", "python TEST_INT02_ROSTER_LEAVE_LINK.py", "python TEST_INT03_HTTP_MULTI_UPLOAD.py", "python CHECK_ENVIRONMENT.py", "python BUILD_PROJECT.py"],
+  "environment": "Linux build workspace; Chromium via Playwright for the real browser check; Windows runtime not tested",
+  "result": "PASS",
+  "acceptance_cases_covered": {
+    "real_browser_multi_file_upload": "PASS: verified in an actual Chromium browser (Playwright) — selected four real files through the page's own file inputs, clicked the real upload button, and confirmed the dashboard updated (3 records, KPIs, table) with no direct Python calls involved. Screenshots taken as evidence.",
+    "old_single_file_upload_unchanged": "PASS: after the multi-upload, the original single-file input was used in the same browser session and still worked correctly.",
+    "missing_source_and_unknown_employee_visible_on_screen": "PASS: the panel's status line showed 'employee: not delivered' style reporting in the attendance-only case (backend test), and in the full four-file browser run, the unknown-employee warning appeared in the page's own Warnings section exactly as INT-01 produces it.",
+    "unsupported_extension_rejected_from_ui_flow": "PASS (backend-level, same code path the UI calls): a .txt file posted as the employee field over the real endpoint was rejected with a clear, field-named error message."
+  },
+  "expected_result_source": "TEST_INT03_HTTP_MULTI_UPLOAD.py assertions, plus a manual Playwright browser session (not committed to the repo; screenshots reviewed during this session)",
+  "independent_check": false,
+  "limitations": [
+    "The Playwright browser session that produced the screenshots was a one-off verification script in a scratch directory, not a committed automated test; TEST_INT03_HTTP_MULTI_UPLOAD.py is the repeatable, committed proof for the backend endpoint.",
+    "Not tested on Windows or with a password-protected workbook for any of the four sources.",
+    "Whether real production data actually delivers leave in a file separate from attendance is still unconfirmed (see PROJECT_LOG.md)."
+  ]
+}
