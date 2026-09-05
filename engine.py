@@ -190,7 +190,7 @@ def reporting_date(rows, cfg):
     return datetime.now().date().isoformat()
 
 
-def process_file(path, source_name=None):
+def process_file(path, source_name=None, auxiliary_paths=None):
     source_name, cfg = source_name or Path(path).name, config()
     source_hash = file_digest(path)
     file_hash = hashlib.sha256((source_hash + hashlib.sha256(PROJECT_PATH.read_bytes()).hexdigest()).encode()).hexdigest()
@@ -211,6 +211,10 @@ def process_file(path, source_name=None):
         raise ValueError("Required columns are missing (" + "; ".join(missing_errors) + "). The previous good result was kept.")
     joined = calc.join_sources(source_rows, cfg)
     warnings.extend(cfg.pop("_runtime_warnings", []))
+    auxiliary_report = None
+    if auxiliary_paths:
+        joined, auxiliary_report = calc.process_auxiliary_sources(joined, auxiliary_paths, cfg)
+        warnings.extend(auxiliary_report.get("warnings", []))
     calculated, bad, notes = calc.apply_logic(joined, cfg); rejected.extend({**item, "source": primary_id} for item in bad); warnings.extend(notes)
     keys = cfg.get("refresh", {}).get("business_keys", [])
     duplicate_policy = cfg.get("refresh", {}).get("duplicate_policy", "keep_latest")
@@ -233,6 +237,7 @@ def process_file(path, source_name=None):
     reconciliation["balanced"] = reconciliation["source_rows"] == reconciliation["accepted_rows"] + reconciliation["rejected_rows"]
     if not reconciliation["balanced"]: raise RuntimeError("Row reconciliation failed. The previous good result was kept.")
     result.update({"reader": reader, "file_probe": file_probe, "mapping": mappings, "reconciliation": reconciliation, "warnings": sorted(set(warnings)), "rejected_preview": rejected[:20]})
+    if auxiliary_report is not None: result["auxiliary_sources"] = auxiliary_report["sources"]
     persist(rows, rejected, result, summary, source_name, file_hash, mode, primary_input_count, len(calculated), primary_rejected_count, reporting_date(calculated, cfg), cfg)
     _runtime_log(f"UPLOAD OK | file={source_name} | run_id={result.get('run_id')} | rows={len(rows)} | rejected={len(rejected)} | reader={reader}")
     return result

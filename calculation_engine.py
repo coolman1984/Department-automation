@@ -48,6 +48,8 @@ def load_config(project_path):
     }
     defaults = pack.get("source_defaults", {})
     config["sources"] = [deep_merge(defaults, item) for item in raw.get("sources", [{"id": "main", "sheet_name": "Data"}])]
+    config["auxiliary_sources"] = [deep_merge(defaults, item) for item in raw.get("auxiliary_sources", [])]
+    config["auxiliary_joins"] = raw.get("auxiliary_joins", [])
     config = deep_merge(config, raw.get("overrides", {}))
     validate_config(config)
     return config
@@ -77,6 +79,25 @@ def validate_config(config):
     if validation.get("duplicate_source_columns", "first_non_blank") not in {"first_non_blank", "block"}: raise ValueError("duplicate_source_columns must be first_non_blank or block")
     if validation.get("duplicate_join_keys", "keep_latest") not in {"keep_latest", "keep_first", "block"}: raise ValueError("duplicate_join_keys must be keep_latest, keep_first or block")
     if config.get("history", {}).get("period_aggregation", "latest") not in {"latest", "average", "sum", "minimum", "maximum"}: raise ValueError("history.period_aggregation is not supported")
+    validate_auxiliary_sources(config)
+
+
+def validate_auxiliary_sources(config):
+    """Optional multi-file HR sources (INT-01): employee, roster, leave. Empty by default, so V1.0 attendance-only projects are unaffected."""
+    sources = config.get("auxiliary_sources", [])
+    ids = [source.get("id") for source in sources]
+    if any(not item for item in ids) or len(ids) != len(set(ids)): raise ValueError("Every auxiliary source needs a unique id")
+    known_ids = {source.get("id", "main") for source in config.get("sources", [])} | set(ids)
+    for source in sources:
+        header = source.get("header_row", 1)
+        if str(header).lower() != "auto":
+            try:
+                if int(header) < 1: raise ValueError
+            except (TypeError, ValueError):
+                raise ValueError(f"header_row must be a positive number or auto for auxiliary source {source['id']}")
+    for join in config.get("auxiliary_joins", []):
+        if join.get("right_source") not in known_ids: raise ValueError(f"auxiliary_joins.right_source '{join.get('right_source')}' is not a known source id")
+        if not join.get("right_key") or not join.get("left_key"): raise ValueError("auxiliary_joins entries need right_key and left_key")
 
 
 def normalize(value):
@@ -440,9 +461,8 @@ def read_sources(path, config):
         except Exception as second: raise RuntimeError(f"Normal read failed: {first}. Excel fallback failed: {second}") from second
 
 
-def join_sources(source_rows, config):
-    rows = [dict(row) for row in source_rows.get(config["sources"][0].get("id", "main"), [])]
-    for join in config.get("joins", []):
+def _apply_join_specs(rows, source_rows, join_specs, config):
+    for join in join_specs:
         right_key, left_key = join.get("right_key"), join.get("left_key")
         index, duplicate_keys = {}, set()
         duplicate_policy = config.get("validation", {}).get("duplicate_join_keys", "keep_latest")
@@ -461,6 +481,83 @@ def join_sources(source_rows, config):
             match = index.get(str(row.get(left_key)))
             for field in join.get("fields", []): row[join.get("prefix", "") + field] = match.get(field) if match else None
     return rows
+
+
+def join_sources(source_rows, config):
+    rows = [dict(row) for row in source_rows.get(config["sources"][0].get("id", "main"), [])]
+    return _apply_join_specs(rows, source_rows, config.get("joins", []), config)
+
+
+def read_single_workbook_source(path, source, config):
+    """Read exactly one auxiliary source from its own, independent workbook file (INT-01 multi-file upload)."""
+    from openpyxl import load_workbook
+    data_only = bool(config.get("excel", {}).get("data_only", True))
+    workbook = load_workbook(path, read_only=True, data_only=data_only, keep_links=False)
+    try:
+        sheet = _workbook_sheet(workbook, source.get("sheet_name", "auto"))
+        headers, iterator, header_number = _worksheet_header(sheet, source)
+        mapped_source = {**source, "header_row": header_number}
+        return map_and_clean(headers, iterator, mapped_source, config)
+    finally:
+        workbook.close()
+
+
+def read_one_auxiliary_source(path, source, config):
+    path = Path(path)
+    if not path.exists(): raise FileNotFoundError(f"Excel source file was not found: {path.name}.")
+    if not path.is_file(): raise ValueError(f"The selected source is not a file: {path.name}")
+    if path.stat().st_size == 0: raise ValueError(f"The selected file is empty: {path.name}")
+    if path.suffix.lower() == ".csv": return read_csv_source(path, source, config)
+    return read_single_workbook_source(path, source, config)
+
+
+def read_auxiliary_sources(paths_by_id, config):
+    """Read whichever auxiliary sources (employee, roster, leave, ...) have a file this upload. A source with no path is simply absent this run, not an error."""
+    outputs, missing_ids = {}, []
+    for source in config.get("auxiliary_sources", []):
+        source_id = source.get("id")
+        path = paths_by_id.get(source_id)
+        if not path:
+            missing_ids.append(source_id)
+            continue
+        outputs[source_id] = read_one_auxiliary_source(path, source, config)
+    return outputs, missing_ids
+
+
+def enrich_with_auxiliary_sources(rows, auxiliary_outputs, config):
+    """Left-join accepted auxiliary rows onto the primary (attendance) rows using config['auxiliary_joins']. Never drops or rejects a primary row for a missing or unmatched auxiliary source."""
+    source_rows = {source_id: output[0] for source_id, output in auxiliary_outputs.items()}
+    rows = _apply_join_specs([dict(row) for row in rows], source_rows, config.get("auxiliary_joins", []), config)
+    return rows
+
+
+def process_auxiliary_sources(rows, paths_by_id, config):
+    """INT-01: read whichever of the employee/roster/leave files arrived with this upload, join the ones with a configured link onto the attendance rows, and report what was missing, structurally broken, or referenced an unknown employee. A missing or structurally broken auxiliary file never fails the attendance upload; it is skipped and reported instead."""
+    outputs, missing_ids = read_auxiliary_sources(paths_by_id or {}, config)
+    warnings, sources_report, usable_outputs = [], {}, {}
+    for source in config.get("auxiliary_sources", []):
+        source_id = source.get("id")
+        if source_id in missing_ids:
+            sources_report[source_id] = {"delivered": False, "accepted_count": 0, "rejected_count": 0, "structure_ok": None}
+            warnings.append(f"{source_id} source was not delivered in this upload; its data was not refreshed.")
+            continue
+        accepted, rejected, missing_fields, mapping, notes = outputs[source_id]
+        if missing_fields:
+            sources_report[source_id] = {"delivered": True, "accepted_count": 0, "rejected_count": len(rejected), "structure_ok": False, "structure_error": ", ".join(missing_fields)}
+            warnings.append(f"{source_id} source was delivered but is missing required column(s) ({', '.join(missing_fields)}); it was skipped, not linked this time.")
+            continue
+        sources_report[source_id] = {"delivered": True, "accepted_count": len(accepted), "rejected_count": len(rejected), "structure_ok": True}
+        warnings.extend(notes)
+        usable_outputs[source_id] = (accepted, rejected, missing_fields, mapping, notes)
+    enriched = enrich_with_auxiliary_sources(rows, usable_outputs, config)
+    employee_output = usable_outputs.get("employee")
+    if employee_output is not None:
+        known_ids = {row.get("employee_id") for row in employee_output[0] if row.get("employee_id")}
+        unknown_count = sum(1 for row in enriched if row.get("employee_id") and row.get("employee_id") not in known_ids)
+        sources_report["employee"]["unknown_employee_references"] = unknown_count
+        if unknown_count:
+            warnings.append(f"{unknown_count} attendance row(s) reference an employee_id that was not found in the employee source.")
+    return enriched, {"sources": sources_report, "missing_sources": missing_ids, "warnings": warnings}
 
 
 def apply_logic(rows, config):

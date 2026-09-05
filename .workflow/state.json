@@ -5,7 +5,7 @@
   "contract_version": "V1.0",
   "route": "available_claude",
   "phase": "INTEGRATE",
-  "status": "IN_PROGRESS",
+  "status": "AWAITING_SWITCH",
   "phase_attempt": 1,
   "workspace_path": "HR_Attendance_Control_V1",
   "source_revision": "foundation-local-v1",
@@ -15,10 +15,11 @@
     "Recorded product decisions and future multi-file boundary",
     "BLD-01: clarified import-rejection messages in USER_GUIDE.md; no engine, key, or PROJECT.json change",
     "INT-01 decision recorded: separate files uploaded together",
-    "INT-01 sub-stage 1: documented source contracts for attendance, employee, roster, leave (project_memory/INT-01-SOURCE-CONTRACTS_AR.md); no engine or PROJECT.json change yet"
+    "INT-01 sub-stage 1: documented source contracts for attendance, employee, roster, leave (project_memory/INT-01-SOURCE-CONTRACTS_AR.md)",
+    "INT-01 sub-stage 2: engine.process_file gained an optional auxiliary_paths parameter; employee/roster/leave are read from independent files; employee is joined onto attendance (1:1 by employee_id); roster/leave are validated but not yet linked; four INT-01 acceptance tests pass in TEST_INT01_MULTI_SOURCE.py; core_change approved and LOCKED_CORE.json refreshed via BUILD_PROJECT.py"
   ],
   "current_task_id": "INT-01",
-  "next_task_id": "INT-01",
+  "next_task_id": "INT-02",
   "reported_model": "Claude Sonnet 5 (claude-sonnet-5), عبر أداة Claude Code",
   "reported_effort": "غير متحقق داخل أداة المستخدم",
   "identity_verified": true,
@@ -48,6 +49,6 @@
     "measurement_source": "not collected in this foundation run"
   },
   "handoff_path": ".workflow/HANDOFF_AR.md",
-  "updated_at": "2026-09-05T01:00:00+00:00",
-  "completion_rule": "The foundation and BLD-01 are complete. The daily-delivery shape decision is recorded. INT-01 source contracts are documented but the acceptance tests and engine implementation for multi-file HR ingestion are not started. The product remains incomplete until INT-01 finishes, Windows validation runs, and independent review completes."
+  "updated_at": "2026-09-05T02:00:00+00:00",
+  "completion_rule": "Foundation, BLD-01 and INT-01's first capability slice (multi-file upload with employee join, roster/leave read-and-validate-only) are complete and tested. The product remains incomplete until: roster/leave are actually linked to attendance by employee + work date, a dashboard.html upload flow exists for multiple files, Windows validation runs, and independent review completes."
 }

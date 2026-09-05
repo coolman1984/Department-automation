@@ -1,0 +1,29 @@
+{
+  "record_id": "EVD-INT-01",
+  "task_id": "INT-01",
+  "requirement_ids": ["HR-R05"],
+  "source_revision": "foundation-local-v1",
+  "date": "2026-09-05",
+  "change_summary_ar": "نفّذت القدرة الأولى لرفع أربع ملفات منفصلة مع بعض (حضور + موظف + وردية + إجازة): باراميتر اختياري جديد auxiliary_paths على engine.process_file، ودوال جديدة في calculation_engine.py (read_single_workbook_source, read_auxiliary_sources, enrich_with_auxiliary_sources, process_auxiliary_sources) تقرأ كل مصدر إثرائي من ملفه المستقل. رُبط الموظف فقط بالحضور (مفتاح بسيط employee_id 1:1)؛ الوردية والإجازة تُقرأان وتُتحققان بشكل مستقل ويظهر عددهما في النتيجة، لكن ربطهما الزمني بتاريخ العمل مؤجل لمرحلة تالية موثقة ولم يُدّعَ حدوثه.",
+  "files_changed": ["engine.py", "calculation_engine.py", "PROJECT.json", "LOCKED_CORE.json", "TEST_INT01_MULTI_SOURCE.py"],
+  "protected_paths_touched": ["engine.py", "calculation_engine.py", "PROJECT.json"],
+  "core_change_reason": "See PROJECT.json core_change.reason: additive-only change, existing process_file(path, source_name) call signature and behavior are unaffected.",
+  "commands": ["python TEST_HR_FOUNDATION.py", "python SMOKE_TEST.py", "python TEST_INT01_MULTI_SOURCE.py", "python BUILD_PROJECT.py"],
+  "environment": "Linux build workspace; Windows runtime not tested",
+  "result": "PASS",
+  "acceptance_cases_covered": {
+    "all_four_sources_delivered_together": "PASS: attendance + employee + roster + leave uploaded in one call; employee fields joined onto matching attendance rows.",
+    "missing_source_visible_not_silent": "PASS: a follow-up upload without roster/leave still succeeds; auxiliary_sources.roster.delivered and .leave.delivered are false and a warning names each missing source.",
+    "unknown_employee_visible_not_silent": "PASS: an attendance row referencing an employee_id absent from the employee source is still accepted (not rejected); employee_employment_status stays blank for that row and unknown_employee_references counts it with a warning.",
+    "late_correction_isolated": "PASS: correcting one attendance_id's worked/late minutes changes only that record; three other, unrelated records (including one from a later work_date) are unchanged.",
+    "history_never_wiped": "PASS: after three sequential uploads, engine.runs() lists all three source files; nothing was overwritten."
+  },
+  "expected_result_source": "TEST_INT01_MULTI_SOURCE.py assertions",
+  "independent_check": false,
+  "limitations": [
+    "Roster and leave are read and validated but not yet linked to attendance by employee + work date; that is PROGRAM_MAP.md step 2, not started.",
+    "The synthetic dataset keeps leave in the same workbook as attendance; whether real production data truly splits them into separate files is still unconfirmed.",
+    "No HTTP/dashboard.html upload flow for multiple files was built in this stage; only the engine.process_file(..., auxiliary_paths=...) function was implemented and tested directly.",
+    "Not tested on Windows or with a password-protected workbook for any of the four sources."
+  ]
+}

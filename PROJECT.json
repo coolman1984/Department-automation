@@ -34,8 +34,8 @@
     ]
   },
   "core_change": {
-    "allow": false,
-    "reason": ""
+    "allow": true,
+    "reason": "INT-01: added an optional auxiliary_paths parameter to engine.process_file and new calculation_engine functions (read_single_workbook_source, read_auxiliary_sources, enrich_with_auxiliary_sources, process_auxiliary_sources) so employee/roster/leave files can be read from their own independent workbooks and the employee source can be joined onto attendance rows. No existing function signature lost backward compatibility; process_file(path, source_name) with no auxiliary_paths behaves exactly as before. TEST_HR_FOUNDATION.py and SMOKE_TEST.py pass unchanged; a new TEST_INT01_MULTI_SOURCE.py covers the four INT-01 acceptance cases."
   },
   "excel": {
     "automatic_protected_files": true,
@@ -89,6 +89,82 @@
     }
   ],
   "joins": [],
+  "auxiliary_sources": [
+    {
+      "id": "employee",
+      "sheet_name": "EMP_01_EmployeeMaster",
+      "header_row": 2,
+      "date_order": "DMY",
+      "read_mode": "auto",
+      "required_fields": ["employee_id"],
+      "critical_fields": ["employee_id"],
+      "field_types": {
+        "employee_id": "text",
+        "employment_status": "text",
+        "hire_date": "date"
+      },
+      "column_aliases": {
+        "employee_id": ["Employee_ID", "Employee ID"],
+        "employment_status": ["Employment_Status", "Employment Status"],
+        "hire_date": ["Hire_Date", "Hire Date"]
+      }
+    },
+    {
+      "id": "roster",
+      "sheet_name": "SCH_02_EmployeeRosters",
+      "header_row": 3,
+      "date_order": "DMY",
+      "read_mode": "auto",
+      "required_fields": ["roster_id", "employee_id", "work_date"],
+      "critical_fields": ["roster_id", "employee_id", "work_date"],
+      "field_types": {
+        "roster_id": "text",
+        "employee_id": "text",
+        "work_date": "date",
+        "shift_id": "text"
+      },
+      "column_aliases": {
+        "roster_id": ["Roster_ID", "Roster ID"],
+        "employee_id": ["Employee_ID", "Employee ID"],
+        "work_date": ["Work_Date", "Work Date"],
+        "shift_id": ["Shift_ID", "Shift ID"]
+      }
+    },
+    {
+      "id": "leave",
+      "sheet_name": "TIM_07_LeaveRequests",
+      "header_row": 2,
+      "date_order": "DMY",
+      "read_mode": "auto",
+      "required_fields": ["leave_request_id", "employee_id"],
+      "critical_fields": ["leave_request_id", "employee_id"],
+      "field_types": {
+        "leave_request_id": "text",
+        "employee_id": "text",
+        "leave_type": "text",
+        "start_date": "date",
+        "end_date": "date",
+        "approval_status": "text"
+      },
+      "column_aliases": {
+        "leave_request_id": ["Leave_Request_ID", "Leave Request ID"],
+        "employee_id": ["Employee_ID", "Employee ID"],
+        "leave_type": ["Leave_Type", "Leave Type"],
+        "start_date": ["Start_Date", "Start Date"],
+        "end_date": ["End_Date", "End Date"],
+        "approval_status": ["Approval_Status", "Approval Status"]
+      }
+    }
+  ],
+  "auxiliary_joins": [
+    {
+      "right_source": "employee",
+      "right_key": "employee_id",
+      "left_key": "employee_id",
+      "fields": ["employment_status", "hire_date"],
+      "prefix": "employee_"
+    }
+  ],
   "overrides": {
     "filters": [
       {"field": "work_date", "label": "Work date", "type": "date_range"},
