@@ -50,6 +50,7 @@ def load_config(project_path):
     config["sources"] = [deep_merge(defaults, item) for item in raw.get("sources", [{"id": "main", "sheet_name": "Data"}])]
     config["auxiliary_sources"] = [deep_merge(defaults, item) for item in raw.get("auxiliary_sources", [])]
     config["auxiliary_joins"] = raw.get("auxiliary_joins", [])
+    config["auxiliary_date_range_joins"] = raw.get("auxiliary_date_range_joins", [])
     config = deep_merge(config, raw.get("overrides", {}))
     validate_config(config)
     return config
@@ -97,7 +98,15 @@ def validate_auxiliary_sources(config):
                 raise ValueError(f"header_row must be a positive number or auto for auxiliary source {source['id']}")
     for join in config.get("auxiliary_joins", []):
         if join.get("right_source") not in known_ids: raise ValueError(f"auxiliary_joins.right_source '{join.get('right_source')}' is not a known source id")
-        if not join.get("right_key") or not join.get("left_key"): raise ValueError("auxiliary_joins entries need right_key and left_key")
+        right_key, left_key = join.get("right_key"), join.get("left_key")
+        if not right_key or not left_key: raise ValueError("auxiliary_joins entries need right_key and left_key")
+        right_parts = right_key if isinstance(right_key, list) else [right_key]
+        left_parts = left_key if isinstance(left_key, list) else [left_key]
+        if len(right_parts) != len(left_parts): raise ValueError(f"auxiliary_joins for '{join.get('right_source')}': right_key and left_key must have the same number of fields")
+    for join in config.get("auxiliary_date_range_joins", []):
+        if join.get("right_source") not in known_ids: raise ValueError(f"auxiliary_date_range_joins.right_source '{join.get('right_source')}' is not a known source id")
+        for required in ("employee_field", "date_field", "start_field", "end_field"):
+            if not join.get(required): raise ValueError(f"auxiliary_date_range_joins for '{join.get('right_source')}' needs {required}")
 
 
 def normalize(value):
@@ -461,14 +470,22 @@ def read_sources(path, config):
         except Exception as second: raise RuntimeError(f"Normal read failed: {first}. Excel fallback failed: {second}") from second
 
 
+def _join_key(row, key_spec):
+    """key_spec is a single field name, or a list of field names for a composite key (e.g. employee_id + work_date)."""
+    parts = key_spec if isinstance(key_spec, list) else [key_spec]
+    values = [row.get(part) for part in parts]
+    if any(value in (None, "") for value in values): return None
+    return str(values[0]) if len(values) == 1 else "␟".join(str(value) for value in values)
+
+
 def _apply_join_specs(rows, source_rows, join_specs, config):
     for join in join_specs:
         right_key, left_key = join.get("right_key"), join.get("left_key")
         index, duplicate_keys = {}, set()
         duplicate_policy = config.get("validation", {}).get("duplicate_join_keys", "keep_latest")
         for right_row in source_rows.get(join.get("right_source"), []):
-            if right_row.get(right_key) in (None, ""): continue
-            key = str(right_row.get(right_key))
+            key = _join_key(right_row, right_key)
+            if key is None: continue
             if key in index:
                 duplicate_keys.add(key)
                 if duplicate_policy == "keep_first": continue
@@ -478,7 +495,7 @@ def _apply_join_specs(rows, source_rows, join_specs, config):
             winner = "latest" if duplicate_policy == "keep_latest" else "first"
             config.setdefault("_runtime_warnings", []).append(f"Join source {join.get('right_source')} had {len(duplicate_keys)} duplicate {right_key} key(s); {winner} value kept")
         for row in rows:
-            match = index.get(str(row.get(left_key)))
+            match = index.get(_join_key(row, left_key))
             for field in join.get("fields", []): row[join.get("prefix", "") + field] = match.get(field) if match else None
     return rows
 
@@ -531,6 +548,40 @@ def enrich_with_auxiliary_sources(rows, auxiliary_outputs, config):
     return rows
 
 
+def match_date_range_source(rows, right_rows, join_spec):
+    """Match each primary row to at most one right-source row whose [start_field, end_field] date range covers the primary row's date_field, for the same employee (e.g. a leave request covering an attendance work_date). Never duplicates a primary row: if more than one right row matches, the one with the largest tie_break_field (e.g. the latest leave_request_id) wins, deterministically. A primary row with no match keeps the linked fields blank; it is never rejected."""
+    employee_field, date_field = join_spec["employee_field"], join_spec["date_field"]
+    start_field, end_field = join_spec["start_field"], join_spec["end_field"]
+    status_field, approved_value = join_spec.get("status_field"), join_spec.get("approved_value")
+    exclude_field, tie_break_field = join_spec.get("exclude_field"), join_spec.get("tie_break_field")
+    fields, prefix = join_spec.get("fields", []), join_spec.get("prefix", "")
+
+    by_employee = defaultdict(list)
+    for right_row in right_rows:
+        if status_field and approved_value is not None and right_row.get(status_field) != approved_value: continue
+        if exclude_field and right_row.get(exclude_field): continue
+        if right_row.get(start_field) in (None, "") or right_row.get(end_field) in (None, ""): continue
+        employee_id = right_row.get(employee_field)
+        if employee_id in (None, ""): continue
+        by_employee[employee_id].append(right_row)
+
+    matched_count, result_rows = 0, []
+    for row in rows:
+        row = dict(row)
+        work_value = row.get(date_field)
+        candidates = []
+        if work_value not in (None, ""):
+            candidates = [candidate for candidate in by_employee.get(row.get(employee_field), [])
+                          if candidate[start_field] <= work_value <= candidate[end_field]]
+        match = None
+        if candidates:
+            match = sorted(candidates, key=lambda item: str(item.get(tie_break_field, "")))[-1] if tie_break_field else candidates[0]
+        for field in fields: row[prefix + field] = match.get(field) if match else None
+        if match: matched_count += 1
+        result_rows.append(row)
+    return result_rows, matched_count
+
+
 def process_auxiliary_sources(rows, paths_by_id, config):
     """INT-01: read whichever of the employee/roster/leave files arrived with this upload, join the ones with a configured link onto the attendance rows, and report what was missing, structurally broken, or referenced an unknown employee. A missing or structurally broken auxiliary file never fails the attendance upload; it is skipped and reported instead."""
     outputs, missing_ids = read_auxiliary_sources(paths_by_id or {}, config)
@@ -557,6 +608,12 @@ def process_auxiliary_sources(rows, paths_by_id, config):
         sources_report["employee"]["unknown_employee_references"] = unknown_count
         if unknown_count:
             warnings.append(f"{unknown_count} attendance row(s) reference an employee_id that was not found in the employee source.")
+    for join in config.get("auxiliary_date_range_joins", []):
+        source_id = join.get("right_source")
+        output = usable_outputs.get(source_id)
+        if output is None: continue
+        enriched, matched_count = match_date_range_source(enriched, output[0], join)
+        if source_id in sources_report: sources_report[source_id]["date_range_matches"] = matched_count
     return enriched, {"sources": sources_report, "missing_sources": missing_ids, "warnings": warnings}
 
 

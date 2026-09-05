@@ -74,12 +74,12 @@
       "write_paths": ["calculation_engine.py", "engine.py", "PROJECT.json", "a new INT-02 test file"],
       "protected_paths": [],
       "acceptance_cases": ["Attendance row's roster_shift_id and roster_status are filled correctly when a matching (employee_id, work_date) roster row exists", "No roster match for a given (employee_id, work_date) leaves those fields blank, not a rejection", "A leave request overlapping a work_date is visible on the matching attendance row without duplicating attendance rows when an employee has more than one leave request", "Existing INT-01 and foundation acceptance tests still pass unchanged"],
-      "verification_commands": ["python TEST_HR_FOUNDATION.py", "python SMOKE_TEST.py", "python TEST_INT01_MULTI_SOURCE.py"],
-      "status": "pending",
-      "attempts": 0,
-      "evidence_paths": [],
-      "source_revision": null,
-      "blocking_reason": "Not started. Needs a composite-key join (employee_id + work_date) for roster, which the current join mechanism does not support (single right_key/left_key only), and a date-range match (not a key join) for leave. Also still open: whether real production data truly delivers leave as a file separate from attendance (see PROJECT_LOG.md)."
+      "verification_commands": ["python TEST_HR_FOUNDATION.py", "python SMOKE_TEST.py", "python TEST_INT01_MULTI_SOURCE.py", "python TEST_INT02_ROSTER_LEAVE_LINK.py", "python BUILD_PROJECT.py"],
+      "status": "verified",
+      "attempts": 1,
+      "evidence_paths": [".workflow/evidence/int-02-results.json"],
+      "source_revision": "foundation-local-v1",
+      "blocking_reason": "Roster is now linked to attendance by a composite key (employee_id + work_date); leave is linked by date-range matching against approved, non-cancelled requests, with a deterministic tie-break so an employee with multiple leave requests never produces duplicate attendance rows. All five acceptance cases (roster match, roster no-match, leave overlap, multi-request no-duplication, and cancelled/pending exclusion) are tested and pass, alongside the unchanged foundation and INT-01 tests. Still open: no dashboard.html upload UI for multiple files; whether production truly splits leave into its own file is unconfirmed."
     }
   ],
   "allowed_statuses": ["pending", "ready", "running", "verified", "blocked", "reviewed"],

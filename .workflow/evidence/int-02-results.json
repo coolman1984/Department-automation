@@ -1,0 +1,30 @@
+{
+  "record_id": "EVD-INT-02",
+  "task_id": "INT-02",
+  "requirement_ids": ["HR-R05"],
+  "source_revision": "foundation-local-v1",
+  "date": "2026-09-05",
+  "change_summary_ar": "ربطت الوردية فعليًا بالحضور بمفتاح مركب (employee_id + work_date) بعد ما وسّعت آلية الربط العامة (_apply_join_specs) لتدعم مفتاح مركب (list) بجانب المفتاح المفرد القديم دون أي تغيير في سلوك الجوينز الحالية. ربطت الإجازة بمنطق مطابقة نطاق تاريخ جديد (match_date_range_source): هل work_date يقع بين تاريخ بداية ونهاية طلب إجازة معتمد وغير ملغى لنفس الموظف، مع اختيار حتمي عند تعدد المرشحين بدون تكرار أي صف حضور.",
+  "files_changed": ["calculation_engine.py", "PROJECT.json", "LOCKED_CORE.json", "TEST_INT02_ROSTER_LEAVE_LINK.py"],
+  "protected_paths_touched": ["calculation_engine.py", "PROJECT.json"],
+  "core_change_reason": "See PROJECT.json core_change.reason (INT-02 section): additive composite-key support in _apply_join_specs, plus a new match_date_range_source function; existing single-field joins (employee join, base engine join_sources) are unaffected.",
+  "design_note_ar": "اكتشفنا أثناء التنفيذ خطأ تصميم أولي: إضافة بادئة (prefix) لحقول أصلاً بادئة بنفس الاسم (roster_status + roster_ = roster_roster_status، leave_type + leave_ = leave_leave_type) كانت بتنتج أسماء أعمدة مكررة وغلط. الحل: أعدنا تسمية الحقل الداخلي لعقد الوردية من roster_status إلى status (فيبقى الاسم النهائي بعد البادئة roster_status كما هو متوقع)، وأزلنا بادئة عقد الإجازة بالكامل (الحقول leave_type وleave_request_id أصلاً واضحة بدون بادئة إضافية).",
+  "commands": ["python TEST_HR_FOUNDATION.py", "python SMOKE_TEST.py", "python TEST_INT01_MULTI_SOURCE.py", "python TEST_INT02_ROSTER_LEAVE_LINK.py", "python BUILD_PROJECT.py"],
+  "environment": "Linux build workspace; Windows runtime not tested",
+  "result": "PASS",
+  "acceptance_cases_covered": {
+    "roster_shift_and_status_filled_on_match": "PASS: an attendance row with a matching (employee_id, work_date) roster row gets roster_shift_id and roster_status filled correctly.",
+    "no_roster_match_left_blank_not_rejected": "PASS: an attendance row with no roster row for its own (employee_id, work_date) keeps roster_shift_id/roster_status blank and is still accepted.",
+    "leave_overlap_visible_no_duplicate_rows": "PASS: a leave request overlapping an attendance row's work_date surfaces leave_type/leave_request_id on that row; an employee with two leave requests (only one covering the work date) still produces exactly one attendance row, matched to the correct request.",
+    "cancelled_and_pending_leave_excluded": "PASS (beyond the minimum ask): a cancelled leave request and a Pending (not yet Approved) leave request covering the work date are both correctly excluded from linking.",
+    "int01_and_foundation_tests_unaffected": "PASS: TEST_HR_FOUNDATION.py, SMOKE_TEST.py and TEST_INT01_MULTI_SOURCE.py all pass unchanged."
+  },
+  "expected_result_source": "TEST_INT02_ROSTER_LEAVE_LINK.py assertions",
+  "independent_check": false,
+  "limitations": [
+    "No HTTP/dashboard.html upload flow for multiple files was built; the capability is tested directly against engine.process_file(..., auxiliary_paths=...).",
+    "Leave-overlap matching assumes at most one leave request should apply per attendance row; if two approved, non-cancelled requests for the same employee ever overlap the same work_date (a data-quality issue upstream), the one with the lexicographically largest leave_request_id wins deterministically, but this has not been validated against a real leave system's numbering.",
+    "Not tested on Windows or with a password-protected workbook for any of the four sources.",
+    "Whether real production data actually delivers leave in a file separate from attendance is still unconfirmed (see PROJECT_LOG.md)."
+  ]
+}

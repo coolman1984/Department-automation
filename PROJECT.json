@@ -35,7 +35,7 @@
   },
   "core_change": {
     "allow": true,
-    "reason": "INT-01: added an optional auxiliary_paths parameter to engine.process_file and new calculation_engine functions (read_single_workbook_source, read_auxiliary_sources, enrich_with_auxiliary_sources, process_auxiliary_sources) so employee/roster/leave files can be read from their own independent workbooks and the employee source can be joined onto attendance rows. No existing function signature lost backward compatibility; process_file(path, source_name) with no auxiliary_paths behaves exactly as before. TEST_HR_FOUNDATION.py and SMOKE_TEST.py pass unchanged; a new TEST_INT01_MULTI_SOURCE.py covers the four INT-01 acceptance cases."
+    "reason": "INT-01: added an optional auxiliary_paths parameter to engine.process_file and new calculation_engine functions (read_single_workbook_source, read_auxiliary_sources, enrich_with_auxiliary_sources, process_auxiliary_sources) so employee/roster/leave files can be read from their own independent workbooks and the employee source can be joined onto attendance rows. No existing function signature lost backward compatibility; process_file(path, source_name) with no auxiliary_paths behaves exactly as before. TEST_HR_FOUNDATION.py and SMOKE_TEST.py pass unchanged; a new TEST_INT01_MULTI_SOURCE.py covers the four INT-01 acceptance cases. INT-02: _apply_join_specs now supports a composite key (a list of fields) so roster links by employee_id+work_date, and a new match_date_range_source function links leave by date-range (work_date within an approved, non-cancelled leave request), never duplicating attendance rows. Single-field joins (the existing employee join and the base engine's join_sources) behave exactly as before. TEST_INT02_ROSTER_LEAVE_LINK.py covers the new roster-match, no-match, leave-overlap, multi-request and cancelled/pending-exclusion cases; all prior tests pass unchanged."
   },
   "excel": {
     "automatic_protected_files": true,
@@ -121,13 +121,15 @@
         "roster_id": "text",
         "employee_id": "text",
         "work_date": "date",
-        "shift_id": "text"
+        "shift_id": "text",
+        "status": "text"
       },
       "column_aliases": {
         "roster_id": ["Roster_ID", "Roster ID"],
         "employee_id": ["Employee_ID", "Employee ID"],
         "work_date": ["Work_Date", "Work Date"],
-        "shift_id": ["Shift_ID", "Shift ID"]
+        "shift_id": ["Shift_ID", "Shift ID"],
+        "status": ["Roster_Status", "Roster Status"]
       }
     },
     {
@@ -144,7 +146,8 @@
         "leave_type": "text",
         "start_date": "date",
         "end_date": "date",
-        "approval_status": "text"
+        "approval_status": "text",
+        "cancellation_flag": "boolean"
       },
       "column_aliases": {
         "leave_request_id": ["Leave_Request_ID", "Leave Request ID"],
@@ -152,7 +155,8 @@
         "leave_type": ["Leave_Type", "Leave Type"],
         "start_date": ["Start_Date", "Start Date"],
         "end_date": ["End_Date", "End Date"],
-        "approval_status": ["Approval_Status", "Approval Status"]
+        "approval_status": ["Approval_Status", "Approval Status"],
+        "cancellation_flag": ["Cancellation_Flag", "Cancellation Flag"]
       }
     }
   ],
@@ -163,6 +167,28 @@
       "left_key": "employee_id",
       "fields": ["employment_status", "hire_date"],
       "prefix": "employee_"
+    },
+    {
+      "right_source": "roster",
+      "right_key": ["employee_id", "work_date"],
+      "left_key": ["employee_id", "work_date"],
+      "fields": ["shift_id", "status"],
+      "prefix": "roster_"
+    }
+  ],
+  "auxiliary_date_range_joins": [
+    {
+      "right_source": "leave",
+      "employee_field": "employee_id",
+      "date_field": "work_date",
+      "start_field": "start_date",
+      "end_field": "end_date",
+      "status_field": "approval_status",
+      "approved_value": "Approved",
+      "exclude_field": "cancellation_flag",
+      "tie_break_field": "leave_request_id",
+      "fields": ["leave_type", "leave_request_id"],
+      "prefix": ""
     }
   ],
   "overrides": {
