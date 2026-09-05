@@ -35,11 +35,11 @@
       "protected_paths": ["PROJECT.json", "engine.py", "calculation_engine.py", "dashboard.html"],
       "acceptance_cases": ["No change to ingestion, business keys, or acceptance totals", "Foundation test remains green"],
       "verification_commands": ["python TEST_HR_FOUNDATION.py"],
-      "status": "ready",
-      "attempts": 0,
-      "evidence_paths": [],
-      "source_revision": null,
-      "blocking_reason": "This is a calibration task. Choose a real low-risk improvement after the selected builder inspects the project."
+      "status": "verified",
+      "attempts": 1,
+      "evidence_paths": [".workflow/evidence/bld-01-results.json"],
+      "source_revision": "foundation-local-v1",
+      "blocking_reason": null
     },
     {
       "id": "INT-01",

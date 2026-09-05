@@ -1,0 +1,26 @@
+{
+  "record_id": "EVD-BLD-01",
+  "task_id": "BLD-01",
+  "requirement_ids": ["OPS-R01"],
+  "source_revision": "foundation-local-v1",
+  "date": "2026-09-05",
+  "change_summary_ar": "إضافة قسم في USER_GUIDE.md يشرح لموظف غير تقني أشهر رسائل رفض الملف عند الرفع (عمود ناقص، عنوان غير موجود، ملف فارغ، لا صفوف صالحة) وما تعنيه كل رسالة، بلغة عربية بسيطة، بدون أي تعديل في engine.py أو calculation_engine.py أو PROJECT.json أو dashboard.html.",
+  "files_changed": ["USER_GUIDE.md"],
+  "protected_paths_touched": [],
+  "command": "python TEST_HR_FOUNDATION.py",
+  "environment": "Linux build workspace; Windows runtime not tested",
+  "result": "PASS",
+  "result_detail": {
+    "ok": true,
+    "baseline_records": 200,
+    "duplicate_guard": true,
+    "after_correction_and_new_record": 201,
+    "last_good_result_preserved": true,
+    "delta_sample_created": true
+  },
+  "additional_checks": ["python SMOKE_TEST.py: PASS"],
+  "note_ar": "اختبار الأساس يعيد كتابة sample/HR_Attendance_Delta_Demo.xlsx كأثر جانبي طبيعي لتشغيله؛ أُعيد هذا الملف لحالته الأصلية بعد كل تشغيل لأن مهمة BLD-01 لا تشمل تعديل sample/.",
+  "expected_result_source": "TEST_HR_FOUNDATION.py assertions",
+  "independent_check": false,
+  "limitations": ["لا يغيّر هذا التحسين أي سلوك في الاستيراد أو المفاتيح أو التاريخ", "لم يُختبر على ويندوز أو مع ملف إكسل محمي", "لا يزال قرار شكل الرفع اليومي المتعدد غير مؤكد؛ INT-01 يبقى متوقفًا"]
+}

@@ -45,6 +45,7 @@
 | نسخة | وقت | ما تغير | الملفات | التحقق |
 | --- | --- | --- | --- | --- |
 | V1.0 | 2026-09-05T00:00:00+00:00 | تحويل القالب إلى أساس حضور: خريطة أعمدة، دمج، مؤشرات، تاريخ، وثائق وخطة تنفيذ. | `PROJECT.json`, الأدلة، `.workflow/`, `TEST_HR_FOUNDATION.py`, `sample/` | فحص أساس الموارد البشرية ناجح؛ فحص ويندوز متبقٍ. |
+| V1.0 | 2026-09-05T00:30:00+00:00 | BLD-01: أُضيف شرح لأشهر رسائل رفض الاستيراد في `USER_GUIDE.md` لموظف غير تقني. لا تغيير في المحرك أو المفاتيح أو `PROJECT.json`. | `USER_GUIDE.md`, `.workflow/evidence/bld-01-results.json`, `.workflow/tasks.json`, `.workflow/state.json`, `.workflow/HANDOFF_AR.md` | `python TEST_HR_FOUNDATION.py` و`python SMOKE_TEST.py` ناجحان بنفس نتائج الأساس. |
 
 ## أحداث البناء الآلية
 
